@@ -2,7 +2,7 @@
 
 ## Who I am
 
-I'm **Damien Pressley**, also known as **UX Dreamer**. I'm a graduate student in Human Systems Engineering at Arizona State University, where I study how people and technology work together, and where that partnership breaks down. I live in Mesa, Arizona, and I'm originally from Philadelphia.
+I'm **Damien Pressley**, also known as **UX Dreamer**. I'm a graduate student in Human Systems Engineering at Arizona State University, where I study how people and technology work together, and where that partnership breaks down. I'm originally from Philadelphia.
 
 GitHub: [@uxdreamer](https://github.com/uxdreamer)
 
@@ -10,13 +10,9 @@ GitHub: [@uxdreamer](https://github.com/uxdreamer)
 
 ## Why this exists
 
-When [cleanyourtv](https://github.com/Gathin23/cleanyourtv) went viral, people were using Claude Code to strip the ads and clutter off their Android and Google TVs. The comments on TikTok kept asking the same question:
+I came across [Clean Your TV](https://github.com/Gathin23/cleanyourtv), a project for clearing the ads and clutter off Android and Google TVs, and tried it. It didn't work on Roku, so I built a fix for Roku. Full credit goes to Clean Your TV for the idea that started this.
 
-> "How can you do this for Roku?"
-
-Nobody had an answer. Every project in the trend relied on Android's developer tools, and Roku works completely differently. I had a Roku, and I had the same frustration everyone in those comments had, so I went looking for the answer myself.
-
-CleanYourRoku is what I found: a privacy guide that anyone can follow without code, and a custom home screen, the **CleanYourRoku launcher**, for anyone who wants to go further.
+CleanYourRoku is that fix: a privacy guide that anyone can follow without code, and a custom home screen, the **CleanYourRoku launcher**, for anyone who wants to go further.
 
 Why it matters to me: recommender systems decide a lot of what we watch, buy and see, and they're designed to serve the company first. I don't think the answer is to avoid AI. I think the answer is to keep your agency: know what the system is doing, question it, and keep the final decision for yourself.
 

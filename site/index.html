@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CleanYourRoku: Your Home. Your TV.</title>
+  <meta name="description" content="Recommender systems choose what you see first. CleanYourRoku turns off Roku tracking and gives you a home screen with only the apps you pick.">
+  <meta name="theme-color" content="#2a0f4f">
+  <meta property="og:title" content="CleanYourRoku: Your Home. Your TV.">
+  <meta property="og:description" content="Recommender systems choose what you see first. CleanYourRoku puts that choice back with you.">
+  <meta property="og:image" content="https://cleanyourroku.com/images/bg-living-room.png">
+  <meta property="og:url" content="https://cleanyourroku.com/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%234c1d95'/><rect x='6' y='9' width='20' height='13' rx='2' fill='none' stroke='white' stroke-width='2.5'/><path d='M12 25h8' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <!-- Relative paths: works when opened as a file and when served from cleanyourroku.com. Bump ?v= after CSS or JS changes. -->
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Side rail (a bottom dock on phones) -->
+<nav class="rail glass" aria-label="Main">
+  <a class="rail-logo" href="#main" aria-label="CleanYourRoku, back to top">
+    <img src="images/logo-clean.png" width="290" height="218" alt="">
+  </a>
+  <ul class="rail-links">
+    <li>
+      <a class="icon-btn" href="https://github.com/uxdreamer/CleanYourRoku" target="_blank" rel="noopener noreferrer" aria-label="CleanYourRoku on GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2.17c-3.2.7-3.88-1.36-3.88-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.16 1.18a10.9 10.9 0 0 1 5.76 0c2.19-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+      </a>
+    </li>
+    <li>
+      <a class="icon-btn" href="https://www.linkedin.com/in/damien-pressley-350573229" target="_blank" rel="noopener noreferrer" aria-label="Damien Pressley on LinkedIn">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 2H3.55C2.7 2 2 2.7 2 3.55v16.9C2 21.3 2.7 22 3.55 22h16.9c.85 0 1.55-.7 1.55-1.55V3.55C22 2.7 21.3 2 20.45 2ZM8 19H5.2V9.5H8V19ZM6.6 8.2a1.62 1.62 0 1 1 0-3.24 1.62 1.62 0 0 1 0 3.24ZM19 19h-2.8v-4.62c0-1.1-.02-2.52-1.53-2.52-1.54 0-1.77 1.2-1.77 2.44V19H10.1V9.5h2.68v1.3h.04c.37-.7 1.28-1.44 2.64-1.44 2.82 0 3.54 1.86 3.54 4.28V19Z"/></svg>
+      </a>
+    </li>
+  </ul>
+  <div class="rail-menu">
+    <button class="icon-btn" id="menu-btn" aria-label="More" aria-expanded="false" aria-controls="menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <div class="menu glass" id="menu" hidden>
+      <button data-sheet="contact">Contact</button>
+      <button data-sheet="limits">Honest Limits</button>
+      <button data-sheet="credits">Credits</button>
+      <hr>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="support.html">Support</a>
+    </div>
+  </div>
+</nav>
+
+<main class="screen" id="main">
+
+  <!-- Hero banner -->
+  <section class="hero" aria-labelledby="headline">
+    <img class="hero-logo" src="images/logo-clean.png" width="290" height="218" alt="CleanYourRoku logo: a purple monster with a tiny TV on its laptop">
+    <div class="hero-copy">
+      <h1 id="headline">Your Home. Your&nbsp;TV.</h1>
+      <p>Recommender systems decide what you see first. CleanYourRoku puts that choice back with you, starting with your Roku's home screen.</p>
+      <div class="hero-actions">
+        <a class="btn" href="https://github.com/uxdreamer/CleanYourRoku" target="_blank" rel="noopener noreferrer">Get it on GitHub</a>
+        <span class="hero-note">Free, open source and unofficial</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab bar -->
+  <div class="tabbar">
+    <div class="tabs glass">
+      <div class="tablist" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" id="tab-how" aria-controls="how-to" aria-selected="true">How To</button>
+        <button class="tab" role="tab" id="tab-research" aria-controls="research" aria-selected="false" tabindex="-1">Research</button>
+        <button class="tab" role="tab" id="tab-faq" aria-controls="faq" aria-selected="false" tabindex="-1">FAQ</button>
+        <button class="tab" role="tab" id="tab-about" aria-controls="about" aria-selected="false" tabindex="-1">About</button>
+      </div>
+      <button class="photos-btn" data-sheet="photos">Photos</button>
+    </div>
+    <div class="arrows" hidden>
+      <button class="arrow glass" id="prev" aria-label="Previous cards">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+      </button>
+      <button class="arrow glass" id="next" aria-label="More cards">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Card area -->
+  <div class="stage glass">
+
+    <section class="panel" id="how-to" role="tabpanel" aria-labelledby="tab-how">
+      <div class="cards">
+        <article class="card">
+          <p class="card-tag">Step 0 · No code</p>
+          <h3>Privacy settings</h3>
+          <p>Ten minutes with your remote. Hide the recommendation rows, turn off personalized ads and reset your advertising ID. You can undo all of it.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/roku-privacy-settings.md" target="_blank" rel="noopener noreferrer">Read the privacy guide</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">Step 1 · About 20 minutes</p>
+          <h3>Install the launcher</h3>
+          <p>Turn on Roku's developer mode, pick your apps, pull their logos, then zip it and use Delete, Upload, Install. The current build lists 20 apps, and you choose your own.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/roku-setup.md" target="_blank" rel="noopener noreferrer">Read the setup guide</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">Optional</p>
+          <h3>My Album and Jellyfin</h3>
+          <p>My Album is a tile for your family tree, photos, videos, recipes, music and links. Your own Jellyfin server can stream the videos and music, with your API key kept out of Git.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/jellyfin.md" target="_blank" rel="noopener noreferrer">Read the Jellyfin guide</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">Work in progress</p>
+          <h3>Phone remote</h3>
+          <p>Back from an app lands on Roku's home, not the launcher. This small web page gets you back in one tap. That one button is the only one that works so far.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/scripts/rokuremote.py" target="_blank" rel="noopener noreferrer">See the script</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="research" role="tabpanel" aria-labelledby="tab-research">
+      <div class="cards">
+        <article class="card">
+          <p class="card-tag">The system</p>
+          <h3>Recommender systems</h3>
+          <p>They predict what you'll want and put it in front of you. Personalization isn't simply bad. The catch is who it's tuned for: watch time, purchases and ad revenue.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/research.md" target="_blank" rel="noopener noreferrer">Read the overview</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">The risk</p>
+          <h3>Bubbles and automation bias</h3>
+          <p>Your world can narrow without feeling narrower. And accepting a recommendation is easier than searching, so systems drift from suggesting to deciding.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/research.md#automation-and-human-agency" target="_blank" rel="noopener noreferrer">Read more on automation</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">Human agency</p>
+          <h3>Know. Question. Decide.</h3>
+          <p>The answer isn't to avoid AI. Know what the system is doing, question it and keep the final decision. Most people never change defaults, so control should be the default.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/research.md#control-should-be-the-default" target="_blank" rel="noopener noreferrer">Read why defaults matter</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">HSE 524, Arizona State University</p>
+          <h3>"From Audience to Main Character"</h3>
+          <p>CleanYourRoku is the smart TV case study in this paper on recommender systems and human agency.</p>
+          <p class="more">Paper link coming soon</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="faq" role="tabpanel" aria-labelledby="tab-faq">
+      <div class="cards">
+        <article class="card">
+          <p class="card-tag">Network</p>
+          <h3>Why do I get a 403 error?</h3>
+          <p>Your Roku is limiting network control. Set Network access to Permissive under Control by mobile apps. Any device on your Wi-Fi can then send commands, so that's your call.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Publishing a beta</p>
+          <h3>Is the LaunchApp warning a problem?</h3>
+          <p>No, not for a beta. A launcher opens other apps, so the scan flags it. A warning isn't an error, and the beta still publishes and runs.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Publishing a beta</p>
+          <h3>What if my package is over 4 MB?</h3>
+          <p>That's a warning, not a blocker, but smaller loads faster. Shrink big images, remove ones you don't use and use JPEG for photos.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Everyday use</p>
+          <h3>Why does Back go to Roku's home?</h3>
+          <p>That's Roku, not a bug, and a sideloaded app can't change it. Put CleanYourRoku first in your app list so it's one click away.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Everyday use</p>
+          <h3>Can I have more than one home screen?</h3>
+          <p>Sort of. Roku allows one sideloaded app at a time, but you can keep several zips and install the one you want. It takes about a minute.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Safety</p>
+          <h3>Does it uninstall or block apps?</h3>
+          <p>No. It only changes which apps you see on its screen. Everything else stays installed. It curates, so a kids' profile isn't a parental control.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Safety</p>
+          <h3>Will it break my Roku?</h3>
+          <p>Developer mode is an official Roku feature, and nothing here modifies your Roku's system software. To undo it, delete the app and turn developer mode off.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Compatibility</p>
+          <h3>Does it work on my Roku model?</h3>
+          <p>It's been tested on one Roku streaming player. Others should work, but that isn't confirmed. If you try it, please share your notes.</p>
+          <a class="more" href="https://github.com/uxdreamer/CleanYourRoku/blob/main/docs/faq.md" target="_blank" rel="noopener noreferrer">Read the full FAQ</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="about" role="tabpanel" aria-labelledby="tab-about">
+      <div class="cards">
+        <article class="card">
+          <p class="card-tag">Who</p>
+          <h3>Damien Pressley</h3>
+          <p>A UX researcher in ASU's graduate Human Systems Engineering program, studying how people interact with technology and automation.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Why</p>
+          <h3>A fix for Roku</h3>
+          <p>Damien came across Clean Your TV, tried it and found it didn't work on Roku. So he built a fix for Roku. This site is that fix.</p>
+        </article>
+        <article class="card">
+          <p class="card-tag">Credit</p>
+          <h3>Clean Your TV</h3>
+          <p>The original project for Android and Google TVs, and the inspiration for this one.</p>
+          <a class="more" href="https://github.com/Gathin23/cleanyourtv" target="_blank" rel="noopener noreferrer">Visit Clean Your TV</a>
+        </article>
+        <article class="card">
+          <p class="card-tag">How</p>
+          <h3>AI as a partner</h3>
+          <p>Built with AI as a partner, not a decision-maker. Every choice about what goes on the screen was made by a person.</p>
+        </article>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="foot glass">
+    <p>Unofficial. Not affiliated with Roku or Vizio. Roku is a trademark of Roku,&nbsp;Inc.</p>
+    <p>No trackers, no cookies, no third-party fonts.</p>
+    <nav class="foot-links" aria-label="Legal">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="support.html">Support</a>
+    </nav>
+  </footer>
+
+</main>
+
+<!-- Pop-ups from the rail menu -->
+<dialog class="sheet" id="contact" aria-labelledby="contact-title">
+  <div class="sheet-head">
+    <h2 id="contact-title">Contact</h2>
+    <button class="icon-btn sheet-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>
+    </button>
+  </div>
+  <p>CleanYourRoku is open source, and contributions are welcome. Tried it on another Roku, found a bug or have a fix? Open an issue or a pull request on GitHub.</p>
+  <ul>
+    <li><a href="https://github.com/uxdreamer/CleanYourRoku" target="_blank" rel="noopener noreferrer">Visit the repo</a></li>
+    <li><a href="https://github.com/uxdreamer/CleanYourRoku/issues/new" target="_blank" rel="noopener noreferrer">Open an issue</a></li>
+    <li><a href="https://github.com/uxdreamer/CleanYourRoku/pulls" target="_blank" rel="noopener noreferrer">Open a pull request</a></li>
+    <li>Email: <a href="mailto:support@cleanyourroku.com">support@cleanyourroku.com</a></li>
+  </ul>
+</dialog>
+
+<dialog class="sheet" id="limits" aria-labelledby="limits-title">
+  <div class="sheet-head">
+    <h2 id="limits-title">Honest Limits</h2>
+    <button class="icon-btn sheet-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>
+    </button>
+  </div>
+  <p>A tool about agency should be honest about what it can and can't do.</p>
+  <ul>
+    <li><strong>Tested on two devices.</strong> One Roku streaming player and one Vizio TV. Other models may behave differently.</li>
+    <li><strong>One sideloaded app at a time.</strong> Installing a new zip replaces the old one.</li>
+    <li><strong>Back goes to Roku's home.</strong> An app can't override that.</li>
+    <li><strong>The ad panel on Roku's home stays.</strong> No setting removes it. The launcher is an alternative home, not a change to Roku's.</li>
+    <li><strong>It curates, it doesn't control.</strong> It doesn't uninstall, block or lock anything. It's not a parental control tool.</li>
+    <li><strong>My Album's sample content is made up.</strong> Its sample videos and music need your own Jellyfin server, or you can replace them.</li>
+  </ul>
+</dialog>
+
+<dialog class="sheet" id="credits" aria-labelledby="credits-title">
+  <div class="sheet-head">
+    <h2 id="credits-title">Credits</h2>
+    <button class="icon-btn sheet-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>
+    </button>
+  </div>
+  <ul>
+    <li><a href="https://github.com/Gathin23/cleanyourtv" target="_blank" rel="noopener noreferrer">Clean Your TV</a> by Gathin23, the original inspiration</li>
+    <li>Built by Damien Pressley, with <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">Claude</a> and <a href="https://claude.com/claude-code" target="_blank" rel="noopener noreferrer">Claude Code</a> as coding partners</li>
+    <li>Artwork made with Midjourney and ChatGPT image generation</li>
+    <li>Layout designed in Figma, streaming by <a href="https://jellyfin.org" target="_blank" rel="noopener noreferrer">Jellyfin</a></li>
+    <li><a href="https://github.com/uxdreamer/CleanYourRoku/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></li>
+  </ul>
+</dialog>
+
+<dialog class="sheet sheet-wide" id="photos" aria-labelledby="photos-title">
+  <div class="sheet-head">
+    <h2 id="photos-title">Before and After</h2>
+    <button class="icon-btn sheet-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>
+    </button>
+  </div>
+  <div class="compare">
+    <figure>
+      <img src="images/roku-before.jpg" width="1200" height="800" loading="lazy" alt="Photo of a stock Roku home screen with a Top Picks for You row, and a large football ad on the right.">
+      <figcaption>Before: Roku's home screen, run by a recommender system.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/hero-launcher.jpg" width="1920" height="1080" loading="lazy" alt="The CleanYourRoku launcher: a grid of app tiles titled My Apps over a movie theater background, with no recommendation rows or ads.">
+      <figcaption>After: CleanYourRoku, with a custom background and only my downloaded apps. (Early build, when the launcher was called Dreamer TV.)</figcaption>
+    </figure>
+  </div>
+</dialog>
+
+<script src="app.js?v=6"></script>
+</body>
+</html>

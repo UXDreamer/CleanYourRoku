@@ -56,7 +56,7 @@ components/HomeScene.xml  App grid, app list (m.apps), My Channel page, key hand
 components/Launcher.xml   Task that opens the selected app (roAppManager.LaunchApp)
 components/AppTile.xml    One grid tile (the app's logo)
 images/                   App art and guide screenshots; pulled logos live here locally
-index.html, site/         The cleanyourroku.com website
+site/                     The cleanyourroku.com website (GitHub Pages deploys this folder)
 make_stills.py            Makes My Channel photos from Jellyfin videos
 scripts/pull_logos.py     Lists installed apps and pulls their icons via Roku ECP (port 8060)
 scripts/make_qr.py        Makes QR code images for My Channel's Share Links (needs: pip3 install segno)
