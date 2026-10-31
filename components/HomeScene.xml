@@ -1,0 +1,2772 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="HomeScene" extends="Scene">
+<script type="text/brightscript"><![CDATA[
+sub init()
+    print "CLEANYOURROKU STARTED"
+    m.ch = loadMyChannel()
+    ' The first tile opens My Channel. Its label is "name" from mychannel.json.
+    m.apps = [
+        [m.ch.name, "mychannel"], ["YouTube", "837"], ["Netflix", "12"], ["Hulu", "2285"], ["Starz", "65067"],
+        ["Pluto TV", "74519"], ["Tubi", "41468"], ["NFL", "44856"],
+        ["Prime Video", "13"], ["Frndly TV", "298229"], ["NBA", "73249"],
+        ["Plex", "13535"], ["Roku Media Player", "2213"], ["Vevo", "20445"],
+        ["iHeart", "20197"], ["TuneIn", "1453"], ["6abc Philadelphia", "583225"],
+        ["TV Cast", "58621"], ["Jellyfin", "592369"], ["ESPN", "34376"], ["Peacock", "593099"]
+    ]
+    content = CreateObject("roSGNode", "ContentNode")
+    for each a in m.apps
+        item = content.CreateChild("ContentNode")
+        item.title = a[0]
+        if a[1] = "mychannel" then
+            item.HDPosterUrl = m.ch.tileImage
+        else
+            item.HDPosterUrl = "pkg:/images/app_" + a[1] + ".png"
+        end if
+    end for
+    m.grid = m.top.findNode("grid")
+    m.grid.content = content
+    m.grid.setFocus(true)
+    m.launcher = CreateObject("roSGNode", "Launcher")
+    m.title = m.top.findNode("title")
+    m.fs = CreateObject("roFileSystem")
+
+    ' My Channel: a section only shows up if mychannel.json has content for it
+    m.sections = []
+    if m.ch.family.Count() > 0 then m.sections.Push({ title: "Family", kind: "family" })
+    if m.ch.photos.Count() > 0 then m.sections.Push({ title: "Photos", kind: "photos" })
+    if m.ch.videos.Count() > 0 then m.sections.Push({ title: "Videos", kind: "videos" })
+    if m.ch.recipes.Count() > 0 then m.sections.Push({ title: "Recipes", kind: "recipes" })
+    if m.ch.music.Count() > 0 then m.sections.Push({ title: "Music", kind: "music" })
+    if m.ch.links.Count() > 0 then m.sections.Push({ title: "Links", kind: "links" })
+    m.sections.Push({ title: "About", kind: "about" })
+    m.pos = { photos: 0, links: 0, videos: 0, music: 0, recipes: 0, family: 0 }
+    m.kind = m.sections[0].kind
+    mc = CreateObject("roSGNode", "ContentNode")
+    for each sec in m.sections
+        mn = mc.CreateChild("ContentNode")
+        mn.title = sec.title
+    end for
+    m.channel = m.top.findNode("channel")
+    m.menu = m.top.findNode("menu")
+    m.menu.content = mc
+    m.menu.observeField("itemFocused", "showSection")
+    m.menu.observeField("itemSelected", "onMenuSelect")
+    m.top.findNode("chName").text = m.ch.name
+    m.top.findNode("chTagline").text = m.ch.tagline
+    for each id in ["aboutView", "aboutPhoto", "aboutName", "aboutBio", "photosView", "photo", "caption", "photoCount", "linksView", "qr", "qrMissing", "linkLabel", "linkUrl", "linkCount", "videosView", "videoThumb", "videoTitle", "videoInfo", "videoCount", "hint", "video"]
+        m[id] = m.top.findNode(id)
+    end for
+    m.aboutPhoto.uri = m.ch.aboutPhoto
+    m.aboutName.text = m.ch.aboutName
+    m.aboutBio.text = m.ch.bio
+    m.keys = m.top.createChild("Group")
+    m.keys.focusable = true
+    buildRecipes()
+    buildFamily()
+    m.video.observeField("state", "onVideoState")
+    m.audio = CreateObject("roSGNode", "Audio")
+    m.top.appendChild(m.audio)
+    m.audio.observeField("state", "onAudioState")
+    m.audio.notificationInterval = 1
+    m.audio.observeField("position", "onSongTime")
+    m.status = m.top.findNode("musicView").createChild("Label")
+    m.status.translation = [540, 805]
+    m.status.width = 1080
+    m.status.horizAlign = "center"
+    m.status.font = "font:SmallBoldSystemFont"
+    m.panelOn = false
+    m.pf = 3
+    m.slide = false
+    m.full = false
+    m.fullBg = m.top.createChild("Rectangle")
+    m.fullBg.width = 1920
+    m.fullBg.height = 1080
+    m.fullBg.color = "0x000000FF"
+    m.fullBg.visible = false
+    m.fullPhoto = m.top.createChild("Poster")
+    m.fullPhoto.width = 1920
+    m.fullPhoto.height = 1080
+    m.fullPhoto.loadDisplayMode = "scaleToFit"
+    m.fullPhoto.visible = false
+    m.slideTimer = m.top.createChild("Timer")
+    m.slideTimer.duration = 1
+    m.left = 5
+    m.fullCount = m.top.createChild("Label")
+    m.fullCount.translation = [1500, 1000]
+    m.fullCount.width = 380
+    m.fullCount.horizAlign = "right"
+    m.fullCount.color = "0xFFFFFFCC"
+    m.fullCount.visible = false
+    m.slideTimer.repeat = true
+    m.slideTimer.observeField("fire", "onSlide")
+    m.musicOn = false
+    m.curSong = -1
+end sub
+
+' Reads pkg:/mychannel.json. Missing fields fall back to blanks, so a typo shows a message instead of crashing.
+function loadMyChannel() as Object
+    ch = { name: "My Channel", tagline: "", tileImage: "pkg:/images/app_uxd_s.jpg", aboutName: "", aboutPhoto: "", bio: "", photos: [], links: [], videos: [], music: [], recipes: [], family: [] }
+    raw = ReadAsciiFile("pkg:/mychannel.json")
+    cfg = invalid
+    if raw <> "" then cfg = ParseJson(raw)
+    if type(cfg) <> "roAssociativeArray" then
+        ch.bio = "Couldn't read mychannel.json. Check it for a missing comma or quote, then rebuild the zip and reinstall."
+        return ch
+    end if
+    if getText(cfg, "name") <> "" then ch.name = getText(cfg, "name")
+    if getText(cfg, "tile_image") <> "" then ch.tileImage = getText(cfg, "tile_image")
+    ch.tagline = getText(cfg, "tagline")
+    ch.aboutName = getText(cfg.about, "name")
+    ch.aboutPhoto = getText(cfg.about, "photo")
+    ch.bio = getText(cfg.about, "bio")
+    ch.photos = getList(cfg, "photos")
+    ch.links = getList(cfg, "links")
+    ch.videos = getList(cfg, "videos")
+    ch.music = getList(cfg, "music")
+    ch.recipes = getList(cfg, "recipes")
+    ch.family = getList(cfg, "family")
+    return ch
+end function
+
+function getText(aa as Dynamic, key as String) as String
+    if type(aa) = "roAssociativeArray" then
+        v = aa[key]
+        if type(v) = "roString" or type(v) = "String" then return v
+    end if
+    return ""
+end function
+
+function getList(aa as Dynamic, key as String) as Object
+    if type(aa) = "roAssociativeArray" and type(aa[key]) = "roArray" then return aa[key]
+    return []
+end function
+
+function counter(i as Integer, n as Integer) as String
+    return Str(i + 1).Trim() + " / " + Str(n).Trim()
+end function
+
+sub showSection()
+    i = m.menu.itemFocused
+    if i < 0 or i >= m.sections.Count() then i = 0
+    m.kind = m.sections[i].kind
+    m.aboutView.visible = (m.kind = "about")
+    m.photosView.visible = false
+    m.linksView.visible = (m.kind = "links")
+    m.videosView.visible = false
+    m.top.findNode("musicView").visible = (m.kind = "music")
+    m.rView.visible = (m.kind = "recipes" or m.kind = "videos" or m.kind = "photos")
+    if m.famView <> invalid then m.famView.visible = (m.kind = "family")
+    if m.kind = "about" then
+        m.hint.text = "Up/Down: sections    Back: home"
+    else if m.kind = "family" then
+        drawFamily()
+    else if m.kind = "photos_old" then
+        p = m.ch.photos[m.pos.photos]
+        m.photo.uri = getText(p, "image")
+        m.caption.text = getText(p, "caption")
+        m.photoCount.text = counter(m.pos.photos, m.ch.photos.Count()) + slideTag()
+        placeIcon(m.photoCount)
+        m.hint.text = "Play: Slideshow    OK: Full screen    Left/Right: Browse"
+    else if m.kind = "links" then
+        l = m.ch.links[m.pos.links]
+        qr = "pkg:/images/mychannel/qr_" + getText(l, "id") + ".png"
+        if true then
+            m.qr.uri = qr
+            m.qrMissing.visible = false
+        else
+            m.qr.uri = ""
+            m.qrMissing.visible = true
+        end if
+        m.linkLabel.text = getText(l, "label")
+        link = getText(l, "link")
+        if Left(link, 5) = "WIFI:" then link = "Scan with your phone camera to join."
+        m.linkUrl.text = link
+        m.linkCount.text = counter(m.pos.links, m.ch.links.Count()) + slideTag()
+        placeIcon(m.linkCount)
+        m.hint.text = "Play: Slideshow    OK: Full screen    Left/Right: Browse"
+    else if m.kind = "recipes" or m.kind = "videos" or m.kind = "photos" then
+        setColl(m.kind)
+        drawRecipe()
+    else if m.kind = "music" then
+        if m.musicOn and m.curSong <> m.pos.music then playSong()
+        sg = m.ch.music[m.pos.music]
+        m.top.findNode("musicTitle").text = getText(sg, "title")
+        if getText(sg, "record") <> "" then m.top.findNode("record").uri = getText(sg, "record")
+        m.top.findNode("panel").uri = "pkg:/images/mychannel/panel_" + Stri(m.pos.music + 1).Trim() + ".png"
+        st = getText(sg, "length")
+        stat = "Press OK to play"
+        if m.musicOn and m.curSong = m.pos.music then
+            st = songLeft()
+            stat = ""
+            if m.audio.state = "paused" then stat = "Paused"
+        end if
+        m.top.findNode("musicInfo").text = getText(sg, "artist") + "   ·   Song " + counter(m.pos.music, m.ch.music.Count()) + "   ·   " + st
+        m.status.text = stat
+        m.status.color = getText(sg, "color")
+        m.hint.text = "Press Right for controls. Colored buttons are on-screen only."
+        ml = m.top.findNode("modeLabel")
+        ml.text = modeName()
+        w = ml.boundingRect().width
+        x = 1767 - (30 + 10 + w) / 2
+        m.top.findNode("modeIcon").translation = [x, 920]
+        ml.translation = [x + 40, 921]
+    else if m.kind = "videos" then
+        v = m.ch.videos[m.pos.videos]
+        m.videoTitle.text = getText(v, "title")
+        m.top.findNode("videoThumb").uri = getText(v, "thumb")
+        first = Int(m.pos.videos / 5) * 5
+        for i = 0 to 4
+            card = m.top.findNode("card" + i.ToStr())
+            if first + i < m.ch.videos.Count() then
+                card.uri = getText(m.ch.videos[first + i], "thumb")
+                card.visible = true
+            else
+                card.visible = false
+            end if
+        end for
+        m.top.findNode("cardFocus").translation = [655 + (m.pos.videos - first) * 220, 735]
+        if getText(v, "url") = "" then
+            m.videoInfo.text = "No video link yet. Add a direct MP4 link for this video in mychannel.json."
+        else
+            m.videoInfo.text = getText(v, "length") + "   ·   Press OK to play"
+        end if
+        m.videoCount.text = counter(m.pos.videos, m.ch.videos.Count())
+        m.hint.text = "Left/Right: choose a video    OK: play    Back: home"
+    end if
+end sub
+
+' Left/Right move through photos, links or videos. Stops at the ends instead of wrapping.
+sub browse(d as Integer)
+    if m.kind = "about" then return
+    i = m.pos[m.kind] + d
+    if i < 0 or i >= m.ch[m.kind].Count() then return
+    m.pos[m.kind] = i
+    showSection()
+end sub
+
+sub onMenuSelect()
+    if m.kind = "family" then famEnter()
+    if m.kind = "videos" then playRecipeVideo()
+    if m.kind = "music" then toggleMusic()
+    if m.kind = "links" then toggleFull()
+    if m.kind = "photos" then playRecipeVideo()
+    if m.kind = "recipes" then playRecipeVideo()
+end sub
+
+sub playVideo()
+    stopMusic()
+    if m.video.visible then return
+    v = m.ch.videos[m.pos.videos]
+    if getText(v, "url") = "" then return
+    c = CreateObject("roSGNode", "ContentNode")
+    c.url = getText(v, "url")
+    c.title = getText(v, "title")
+    c.streamFormat = "mp4"
+    if Instr(1, c.url, ".m3u8") > 0 then c.streamFormat = "hls"
+    m.video.content = c
+    m.video.visible = true
+    m.video.setFocus(true)
+    m.video.control = "play"
+end sub
+
+sub onVideoState()
+    if m.video.state = "playing" and m.tipWait = true then
+        m.tipWait = false
+        if m.side <> true then showSideTip()
+    end if
+    if m.video.state = "error" then
+        msg = m.video.errorMsg
+        closeVideo()
+        m.videoInfo.text = "Couldn't play this video (" + msg + "). Check that the link goes straight to an .mp4 file."
+    else if m.video.state = "finished" then
+        closeVideo()
+    end if
+end sub
+
+sub closeVideo()
+    closeVideoCore()
+    if m.rVidBack = true then
+        m.rVidBack = false
+        fc = m.rVidCard
+        pn = m.rVidPanel
+        openRecipeFull()
+        m.rFCard = fc
+        m.rPanel = pn
+        showRecipeFull()
+    else if m.rOn then
+        m.keys.setFocus(true)
+    else if m.kind = "family" and m.fmOn then
+        m.keys.setFocus(true)
+        drawFamily()
+    end if
+end sub
+
+sub sideBuild()
+    par = m.video.getParent()
+    m.sideBg = CreateObject("roSGNode", "Rectangle")
+    m.sideBg.width = 1920
+    m.sideBg.height = 1080
+    m.sideBg.color = "0x000000FF"
+    idx = 0
+    for i = 0 to par.getChildCount() - 1
+        if par.getChild(i).isSameNode(m.video) then idx = i
+    end for
+    par.insertChild(m.sideBg, idx)
+    m.sideG = m.top.createChild("Group")
+    m.sVid = m.sideG.createChild("Label")
+    m.sVid.translation = [0, 0]
+    m.sVid.width = 1920
+    m.sVid.horizAlign = "center"
+    m.sVid.height = 75
+    m.sVid.vertAlign = "center"
+    m.sVid.font = "font:SmallBoldSystemFont"
+    m.sVid.color = "0xFFFFFFFF"
+    m.sNav = m.sideG.createChild("Label")
+    m.sNav.translation = [1260, 893]
+    m.sNav.width = 420
+    m.sNav.height = 40
+    m.sNav.horizAlign = "right"
+    m.sNav.vertAlign = "center"
+    m.sNav.font = "font:SmallSystemFont"
+    m.sNav.color = "0x9FC6F0FF"
+    m.sHead = m.sideG.createChild("Label")
+    m.sHead.translation = [240, 893]
+    m.sHead.width = 1000
+    m.sHead.font = "font:SmallBoldSystemFont"
+    m.sHead.color = "0xF0BE3CFF"
+    m.sBody = m.sideG.createChild("Label")
+    m.sBody.translation = [240, 930]
+    m.sBody.width = 1000
+    m.sBody.height = 100
+    m.sBody.wrap = true
+    m.sBody.maxLines = 2
+    m.sBody.font = "font:MediumSystemFont"
+    m.sBody.color = "0xFFFFFFFF"
+    m.sHint = m.sideG.createChild("Label")
+    m.sHint.translation = [0, 1035]
+    m.sHint.width = 1920
+    m.sHint.height = 40
+    m.sHint.horizAlign = "center"
+    m.sHint.font = "font:SmallestSystemFont"
+    m.sHint.color = "0x9A9A9AFF"
+    m.sHint.text = "Left/Right: Story    OK: Pause    Up or Back: Full screen"
+end sub
+
+sub sideOn()
+    if m.side = true then return
+    if m.sideG = invalid then sideBuild()
+    m.side = true
+    m.sCard = 1
+    m.vT = m.video.translation
+    m.vW = m.video.width
+    m.vH = m.video.height
+    m.video.translation = [240, 75]
+    m.video.width = 1440
+    m.video.height = 810
+    m.sideBg.visible = true
+    m.sideG.visible = true
+    m.keys.setFocus(true)
+    hideSideTip()
+    drawSide()
+    m.video.observeField("position", "onSidePos")
+end sub
+
+sub onSidePos()
+    if m.side = true then drawSide()
+end sub
+
+function stepName() as String
+    if m.coll <> "recipes" then return "story"
+    return "recipe"
+end function
+
+function fmtTime(t as Integer) as String
+    if t < 0 then t = 0
+    sec = t mod 60
+    if sec < 10 then ss = "0" + Stri(sec).Trim() else ss = Stri(sec).Trim()
+    return Stri(Int(t / 60)).Trim() + ":" + ss
+end function
+
+sub showSideTip()
+    if m.tip = invalid then
+        m.tipBg = m.top.createChild("Rectangle")
+        m.tipBg.translation = [1380, 60]
+        m.tipBg.width = 480
+        m.tipBg.height = 70
+        m.tipBg.color = "0x000000C0"
+        m.tip = m.top.createChild("Label")
+        m.tip.translation = [1380, 60]
+        m.tip.width = 480
+        m.tip.height = 70
+        m.tip.horizAlign = "center"
+        m.tip.vertAlign = "center"
+        m.tip.font = "font:SmallBoldSystemFont"
+        m.tip.color = "0xFFFFFFFF"
+        m.tip.text = "Press Down for side view"
+        m.tipTimer = m.top.createChild("Timer")
+        m.tipTimer.duration = 4
+        m.tipTimer.observeField("fire", "hideSideTip")
+    end if
+    m.tipBg.visible = true
+    m.tip.visible = true
+    m.tipTimer.control = "start"
+end sub
+
+sub hideSideTip()
+    if m.tip <> invalid then
+        m.tip.visible = false
+        m.tipBg.visible = false
+    end if
+end sub
+
+sub sideOff()
+    if m.side <> true then return
+    m.side = false
+    m.video.unobserveField("position")
+    m.video.translation = m.vT
+    m.video.width = m.vW
+    m.video.height = m.vH
+    m.sideBg.visible = false
+    m.sideG.visible = false
+end sub
+
+sub drawSide()
+    r = curRecipe()
+    if r = invalid then return
+    cards = recipeCards(r)
+    m.sMax = cards.Count() - 2
+    if m.sMax < 0 then m.sMax = 0
+    if m.sCard < 1 then m.sCard = 1
+    if m.sCard > m.sMax then m.sCard = m.sMax
+    c = cards[m.sCard]
+    top = ""
+    for each k in ["category", "title", "season", "date"]
+        if getText(r, k) <> "" then
+            if top <> "" then top = top + "   ·   "
+            top = top + getText(r, k)
+        end if
+    end for
+    if getText(r, "filmedBy") <> "" then top = top + "   ·   Filmed by " + getText(r, "filmedBy")
+    m.sVid.text = top
+    m.sHead.text = c.title
+    m.sBody.text = c.body
+    tl = getText(r, "length")
+    if m.video.duration > 0 then tl = fmtTime(Int(m.video.duration - m.video.position)) + " left"
+    m.sNav.text = "Story " + Stri(m.sCard).Trim() + " / " + Stri(m.sMax).Trim() + "    ·    " + tl
+end sub
+
+sub closeVideoCore()
+    m.tipWait = false
+    hideSideTip()
+    sideOff()
+    m.video.control = "stop"
+    m.video.visible = false
+    m.menu.setFocus(true)
+end sub
+
+sub openChannel()
+    m.grid.visible = false
+    m.title.visible = false
+    m.channel.visible = true
+    m.menu.setFocus(true)
+    showSection()
+end sub
+
+sub closeChannel()
+    m.rOn = false
+    m.rCard = -1
+    stopMusic()
+    stopSlide()
+    m.channel.visible = false
+    m.grid.visible = true
+    m.title.visible = true
+    m.grid.setFocus(true)
+end sub
+
+sub toggleMusic()
+    if m.ch.music.Count() = 0 then return
+    if m.tapClock <> invalid and m.tapClock.TotalMilliseconds() < 500 then return
+    m.tapClock = CreateObject("roTimespan")
+    if m.musicOn and m.curSong = m.pos.music then
+        if m.audio.state = "paused" then
+            m.audio.control = "resume"
+            m.top.findNode("spin").control = "start"
+        else
+            m.audio.control = "pause"
+            m.top.findNode("spin").control = "stop"
+            m.top.findNode("record").rotation = 0
+        end if
+    else
+        playSong()
+    end if
+    showSection()
+end sub
+
+sub playSong()
+    sg = m.ch.music[m.pos.music]
+    c = CreateObject("roSGNode", "ContentNode")
+    c.url = getText(sg, "url")
+    c.title = getText(sg, "title")
+    c.streamFormat = "mp3"
+    m.audio.content = c
+    m.audio.control = "play"
+    m.musicOn = true
+    m.curSong = m.pos.music
+    m.top.findNode("spin").control = "start"
+end sub
+
+sub stopMusic()
+    if m.audio <> invalid then m.audio.control = "stop"
+    m.musicOn = false
+    m.curSong = -1
+    sp = m.top.findNode("spin")
+    if sp <> invalid then sp.control = "stop"
+end sub
+
+sub enterPanel()
+    m.panelOn = true
+    m.pf = 3
+    m.keys.setFocus(true)
+    updatePanel()
+end sub
+
+sub exitPanel()
+    m.panelOn = false
+    m.top.findNode("pfRing").visible = false
+    m.menu.setFocus(true)
+end sub
+
+sub updatePanel()
+    r = m.top.findNode("pfRing")
+    r.visible = m.panelOn
+    r.translation = [1661 + m.pf * 42, 830]
+end sub
+
+sub pressPanel(i as Integer)
+    n = m.ch.music.Count()
+    if n = 0 then return
+    if i = 0 then
+        if m.mode = invalid or m.mode = "all" then
+            m.mode = "one"
+        else if m.mode = "one" then
+            m.mode = "shuffle"
+        else
+            m.mode = "all"
+        end if
+    else if i = 1 then
+        playSong()
+    else if i = 2 then
+        m.pos.music = (m.pos.music - 1 + n) MOD n
+        playSong()
+    else if i = 3 then
+        toggleMusic()
+        return
+    else if i = 4 then
+        m.pos.music = (m.pos.music + 1) MOD n
+        playSong()
+    end if
+    showSection()
+end sub
+
+sub toggleSlide()
+    if m.slide then
+        stopSlide()
+    else
+        m.slide = true
+        m.left = 5
+        m.slideTimer.control = "start"
+        showSection()
+    end if
+end sub
+
+sub stopSlide()
+    m.slide = false
+    if m.slideTimer <> invalid then m.slideTimer.control = "stop"
+    if (m.kind = "photos" or m.kind = "links") and m.channel.visible then showSection()
+end sub
+
+sub onSlide()
+    if (m.kind <> "photos" and m.kind <> "links") or not m.channel.visible then
+        stopSlide()
+        return
+    end if
+    if m.left > 1 then
+        m.left = m.left - 1
+    else
+        m.left = 5
+        m.pos[m.kind] = (m.pos[m.kind] + 1) MOD m.ch[m.kind].Count()
+    end if
+    showSection()
+    if m.full then m.fullPhoto.uri = fullUri()
+end sub
+
+function slideTag() as String
+    if m.fullCount <> invalid then
+        m.fullCount.visible = m.full and m.slide
+        m.fullCount.text = nextWord() + " in " + Stri(m.left).Trim()
+    end if
+    if m.photoLaid = invalid then
+        m.photoLaid = true
+        ct = m.caption.translation
+        pt = m.photo.translation
+        m.caption.translation = [ct[0], pt[1] - 70]
+        m.photoCount.translation = [ct[0], ct[1]]
+        m.photoCount.width = 1080
+        m.photoCount.horizAlign = "center"
+    end if
+    if m.slideLine <> invalid then m.slideLine.text = ""
+    if m.slide then return "   ·   " + nextWord() + " in " + Stri(m.left).Trim()
+    return "   ·   Play"
+end function
+
+function fullUri() as String
+    if m.fullLabel <> invalid then
+        if m.kind = "links" then m.fullLabel.text = m.linkLabel.text else m.fullLabel.text = ""
+    end if
+    if m.kind = "links" then
+        m.fullPhoto.width = 820
+        m.fullPhoto.height = 820
+        m.fullPhoto.translation = [550, 160]
+        return m.qr.uri
+    end if
+    m.fullPhoto.width = 1920
+    m.fullPhoto.height = 1080
+    m.fullPhoto.translation = [0, 0]
+    return m.photo.uri
+end function
+
+function nextWord() as String
+    if m.kind = "links" then return "Next link"
+    return "Next photo"
+end function
+
+sub placeIcon(lb as Object)
+    if m.icons = invalid then m.icons = {}
+    k = lb.id
+    if m.icons[k] = invalid then
+        ic = lb.getParent().createChild("Poster")
+        ic.width = 28
+        ic.height = 28
+        m.icons[k] = ic
+    end if
+    ic = m.icons[k]
+    if m.measure = invalid then
+        m.measure = m.top.createChild("Label")
+        m.measure.visible = false
+    end if
+    m.measure.font = lb.font
+    m.measure.text = lb.text
+    w = m.measure.boundingRect().width
+    h = m.measure.boundingRect().height
+    t = lb.translation
+    x = t[0] + w + 16
+    if lb.width > 0 and lb.horizAlign = "center" then x = t[0] + (lb.width - w) / 2 + w + 16
+    if lb.width > 0 and lb.horizAlign = "right" then x = t[0] + lb.width - w - 44
+    ic.translation = [x, t[1] + (h - 28) / 2]
+    if m.slide then ic.uri = "pkg:/images/mychannel/pause_icon.png" else ic.uri = "pkg:/images/mychannel/play_icon.png"
+end sub
+
+sub toggleFull()
+    if m.fullClock <> invalid and m.fullClock.TotalMilliseconds() < 500 then return
+    m.fullClock = CreateObject("roTimespan")
+    m.full = true
+    if m.fullLabel = invalid then
+        m.fullLabel = m.top.createChild("Label")
+        m.fullLabel.translation = [0, 30]
+        m.fullLabel.width = 1920
+        m.fullLabel.horizAlign = "center"
+        m.fullLabel.font = "font:LargeBoldSystemFont"
+        m.fullLabel.color = "0xFFFFFFFF"
+    end if
+    m.fullLabel.visible = true
+    m.fullPhoto.uri = fullUri()
+    m.fullBg.visible = true
+    m.fullPhoto.visible = true
+    m.keys.setFocus(true)
+end sub
+
+sub exitFull()
+    if m.fullClock <> invalid and m.fullClock.TotalMilliseconds() < 500 then return
+    m.fullClock = CreateObject("roTimespan")
+    m.full = false
+    m.fullBg.visible = false
+    m.fullPhoto.visible = false
+    m.fullCount.visible = false
+    if m.fullLabel <> invalid then m.fullLabel.visible = false
+    m.menu.setFocus(true)
+end sub
+
+function songLeft() as String
+    d = m.audio.duration
+    if d = invalid or d <= 0 then
+        ln = getText(m.ch.music[m.curSong], "length")
+        c = Instr(1, ln, ":")
+        if c = 0 then return "Now playing"
+        d = Val(Left(ln, c - 1)) * 60 + Val(Mid(ln, c + 1))
+    end if
+    r = Int(d - m.audio.position)
+    if r < 0 then r = 0
+    sec = r MOD 60
+    ss = Stri(sec).Trim()
+    if sec < 10 then ss = "0" + ss
+    return "-" + Stri(Int(r / 60)).Trim() + ":" + ss
+end function
+
+sub onSongTime()
+    if m.kind = "music" and m.channel.visible and m.musicOn then showSection()
+end sub
+
+' ===== Family Tree =====
+function fmCats() as Object
+    return ["Everyone", "Grandparents", "Parents", "Aunts & Uncles", "Cousins", "Kids", "Friends", "In Memory"]
+end function
+
+function fmList() as Object
+    cat = fmCats()[m.fmCat]
+    out = []
+    for each p in m.ch.family
+        ok = false
+        if m.fmCat = 0 then
+            ok = true
+        else if cat = "In Memory" then
+            ok = (getText(p, "died") <> "")
+        else
+            ok = (getText(p, "group") = cat)
+        end if
+        if ok then out.Push(p)
+    end for
+    return out
+end function
+
+function fmAvatar(p as Object) as String
+    if getText(p, "photo") <> "" then return getText(p, "photo")
+    if getText(p, "avatar") = "f" then return "pkg:/images/mychannel/avatar_f.png"
+    return "pkg:/images/mychannel/avatar_m.png"
+end function
+
+function fmYears(p as Object) as String
+    b = getText(p, "born")
+    d = getText(p, "died")
+    if d <> "" then return Right(b, 4) + "  –  " + Right(d, 4)
+    if b <> "" then return "Born " + b
+    return ""
+end function
+
+function nextBirthday() as String
+    months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    dt = CreateObject("roDateTime")
+    dt.ToLocalTime()
+    today = dt.GetMonth() * 32 + dt.GetDayOfMonth()
+    best = 9999
+    who = ""
+    when = ""
+    for each p in m.ch.family
+        b = getText(p, "born")
+        if b <> "" and getText(p, "died") = "" then
+            parts = b.Split(" ")
+            if parts.Count() >= 2 then
+                mi = 0
+                for i = 0 to 11
+                    if months[i] = parts[0] then mi = i + 1
+                end for
+                d = Val(parts[1].Replace(",", ""))
+                if mi > 0 then
+                    k = mi * 32 + d - today
+                    if k < 0 then k = k + 13 * 32
+                    if k < best then
+                        best = k
+                        who = getText(p, "name")
+                        when = parts[0] + " " + Stri(d).Trim()
+                    end if
+                end if
+            end if
+        end if
+    end for
+    if who = "" then return ""
+    if best = 0 then return "Birthday today: " + who + "!"
+    return "Next birthday:  " + who + "  ·  " + when
+end function
+
+sub buildFamily()
+    m.fmOn = false
+    m.fmFoc = "row"
+    m.fmPop = false
+    m.fmPi = 0
+    m.fmCat = 0
+    m.fmGrid = false
+    m.fmProf = false
+    m.fmOb = 0
+    m.fmBig = false
+    m.fpTab = 0
+    m.fpSel = 0
+    m.fpFoc = "body"
+    m.fpPi = 0
+    m.fmPhotoFull = false
+    m.pos.family = 0
+    g = CreateObject("roSGNode", "Group")
+    g.visible = false
+    m.famView = g
+    m.fmTopG = g.createChild("Group")
+    m.fmBday = m.fmTopG.createChild("Label")
+    m.fmBday.translation = [660, 282]
+    m.fmBday.width = 700
+    m.fmBday.height = 50
+    m.fmBday.vertAlign = "center"
+    m.fmBday.font = "font:SmallBoldSystemFont"
+    m.fmBday.color = "0xF0BE3CFF"
+    m.fmCatRing = m.fmTopG.createChild("Rectangle")
+    m.fmCatRing.translation = [1384, 276]
+    m.fmCatRing.width = 352
+    m.fmCatRing.height = 62
+    m.fmCatRing.color = "0xF0BE3CFF"
+    m.fmCatRing.visible = false
+    cb = m.fmTopG.createChild("Rectangle")
+    cb.translation = [1390, 282]
+    cb.width = 340
+    cb.height = 50
+    cb.color = "0x000000D0"
+    m.fmCatLabel = m.fmTopG.createChild("Label")
+    m.fmCatLabel.translation = [1390, 282]
+    m.fmCatLabel.width = 340
+    m.fmCatLabel.height = 50
+    m.fmCatLabel.horizAlign = "center"
+    m.fmCatLabel.vertAlign = "center"
+    m.fmCatLabel.font = "font:SmallBoldSystemFont"
+    m.fmCatLabel.color = "0xFFFFFFFF"
+    m.fmInfo = m.fmTopG.createChild("Label")
+    m.fmInfo.translation = [660, 905]
+    m.fmInfo.width = 1080
+    m.fmInfo.horizAlign = "center"
+    m.fmInfo.font = "font:SmallSystemFont"
+    m.fmInfo.color = "0x9FC6F0FF"
+    ' card view: two big cards
+    m.fmCardsG = g.createChild("Group")
+    m.fmCardRing = m.fmCardsG.createChild("Rectangle")
+    m.fmCardRing.width = 530
+    m.fmCardRing.height = 530
+    m.fmCardRing.color = "0xF0BE3CFF"
+    m.fmCards = []
+    for i = 0 to 1
+        x = 660 + i * 560
+        bg = m.fmCardsG.createChild("Rectangle")
+        bg.translation = [x, 360]
+        bg.width = 520
+        bg.height = 520
+        bg.color = "0x1A1A1AFF"
+        av = m.fmCardsG.createChild("Poster")
+        av.translation = [x + 110, 380]
+        av.width = 300
+        av.height = 300
+        nm = m.fmCardsG.createChild("Label")
+        nm.translation = [x, 695]
+        nm.width = 520
+        nm.horizAlign = "center"
+        nm.font = "font:LargeBoldSystemFont"
+        nm.color = "0xFFFFFFFF"
+        rl = m.fmCardsG.createChild("Label")
+        rl.translation = [x, 765]
+        rl.width = 520
+        rl.horizAlign = "center"
+        rl.font = "font:SmallBoldSystemFont"
+        rl.color = "0x9FC6F0FF"
+        yr = m.fmCardsG.createChild("Label")
+        yr.translation = [x, 815]
+        yr.width = 520
+        yr.horizAlign = "center"
+        yr.font = "font:SmallSystemFont"
+        yr.color = "0xCCCCCCFF"
+        m.fmCards.Push({ bg: bg, av: av, nm: nm, rl: rl, yr: yr })
+    end for
+    ' grid view: 4 across, 3 down
+    m.fmGridG = g.createChild("Group")
+    m.fmGridRing = m.fmGridG.createChild("Rectangle")
+    m.fmGridRing.width = 265
+    m.fmGridRing.height = 175
+    m.fmGridRing.color = "0xF0BE3CFF"
+    m.fmTiles = []
+    for i = 0 to 11
+        x = 660 + (i mod 4) * 275
+        y = 350 + Int(i / 4) * 185
+        tb = m.fmGridG.createChild("Rectangle")
+        tb.translation = [x, y]
+        tb.width = 255
+        tb.height = 165
+        tb.color = "0x1A1A1AFF"
+        ta = m.fmGridG.createChild("Poster")
+        ta.translation = [x + 77, y + 8]
+        ta.width = 100
+        ta.height = 100
+        tn = m.fmGridG.createChild("Label")
+        tn.translation = [x, y + 115]
+        tn.width = 255
+        tn.height = 40
+        tn.horizAlign = "center"
+        tn.vertAlign = "center"
+        tn.font = "font:SmallBoldSystemFont"
+        tn.color = "0xFFFFFFFF"
+        m.fmTiles.Push({ bg: tb, av: ta, nm: tn })
+    end for
+    ' "Showing" list
+    cats = fmCats()
+    m.fmPopG = g.createChild("Group")
+    m.fmPopG.visible = false
+    pb = m.fmPopG.createChild("Rectangle")
+    pb.translation = [1390, 340]
+    pb.width = 340
+    pb.height = cats.Count() * 56 + 16
+    pb.color = "0x0B1B33F0"
+    m.fmPopHi = m.fmPopG.createChild("Rectangle")
+    m.fmPopHi.width = 332
+    m.fmPopHi.height = 52
+    m.fmPopHi.color = "0xF0BE3CFF"
+    m.fmPopLabels = []
+    for i = 0 to cats.Count() - 1
+        pl = m.fmPopG.createChild("Label")
+        pl.translation = [1414, 348 + i * 56]
+        pl.width = 300
+        pl.height = 52
+        pl.vertAlign = "center"
+        pl.font = "font:SmallBoldSystemFont"
+        pl.text = cats[i]
+        m.fmPopLabels.Push(pl)
+    end for
+    ' profile page (same layout idea as About)
+    m.fmProfG = g.createChild("Group")
+    m.fmProfG.visible = false
+    m.fpAv = m.fmProfG.createChild("Poster")
+    m.fpAv.translation = [650, 290]
+    m.fpAv.width = 360
+    m.fpAv.height = 360
+    m.fpMem = m.fmProfG.createChild("Label")
+    m.fpMem.translation = [1060, 245]
+    m.fpMem.font = "font:SmallBoldSystemFont"
+    m.fpMem.color = "0xF0BE3CFF"
+    m.fpMem.text = "In loving memory"
+    m.fpName = m.fmProfG.createChild("Label")
+    m.fpName.translation = [1060, 285]
+    m.fpName.width = 690
+    m.fpName.font = "font:LargeBoldSystemFont"
+    m.fpName.color = "0xFFFFFFFF"
+    m.fpRel = m.fmProfG.createChild("Label")
+    m.fpRel.translation = [1060, 360]
+    m.fpRel.width = 690
+    m.fpRel.font = "font:MediumBoldSystemFont"
+    m.fpRel.color = "0x9FC6F0FF"
+    m.fpDates = m.fmProfG.createChild("Label")
+    m.fpDates.translation = [1060, 410]
+    m.fpDates.width = 690
+    m.fpDates.font = "font:MediumSystemFont"
+    m.fpDates.color = "0xFFFFFFFF"
+    m.fpKnown = m.fmProfG.createChild("Label")
+    m.fpOcc = m.fmProfG.createChild("Label")
+    m.fpOcc.translation = [1060, 458]
+    m.fpOcc.width = 690
+    m.fpOcc.font = "font:MediumSystemFont"
+    m.fpOcc.color = "0xFFFFFFFF"
+    m.fpKnown.translation = [1060, 510]
+    m.fpKnown.width = 690
+    m.fpKnown.height = 100
+    m.fpKnown.wrap = true
+    m.fpKnown.font = "font:MediumSystemFont"
+    m.fpKnown.color = "0xCCCCCCFF"
+    m.fpScan = m.fmProfG.createChild("Label")
+    m.fpScan.translation = [1070, 620]
+    m.fpScan.font = "font:SmallSystemFont"
+    m.fpScan.color = "0x9FC6F0FF"
+    m.fpScan.text = "Scan to follow"
+    m.fpQr = []
+    for i = 0 to 2
+        x = 1070 + i * 245
+        qp = m.fmProfG.createChild("Poster")
+        qp.translation = [x, 660]
+        qp.width = 180
+        qp.height = 180
+        ql = m.fmProfG.createChild("Label")
+        ql.translation = [x - 30, 862]
+        ql.width = 240
+        ql.horizAlign = "center"
+        ql.font = "font:SmallSystemFont"
+        ql.color = "0xFFFFFFFF"
+        m.fpQr.Push({ qp: qp, ql: ql })
+    end for
+    m.fpObG = m.fmProfG.createChild("Group")
+    m.fpObT = m.fpObG.createChild("Label")
+    m.fpObT.translation = [1060, 615]
+    m.fpObT.font = "font:SmallBoldSystemFont"
+    m.fpObT.color = "0xF0BE3CFF"
+    m.fpObB = m.fpObG.createChild("Label")
+    m.fpObB.translation = [1060, 660]
+    m.fpObB.width = 690
+    m.fpObB.height = 260
+    m.fpObB.wrap = true
+    m.fpObB.font = "font:MediumSystemFont"
+    m.fpObB.color = "0xFFFFFFFF"
+    m.fpTabG = g.createChild("Group")
+    m.fpTabG.visible = false
+    m.fpTabBg = []
+    m.fpTabL = []
+    for i = 0 to 3
+        tb2 = m.fpTabG.createChild("Rectangle")
+        tb2.translation = [660 + i * 230, 190]
+        tb2.width = 210
+        tb2.height = 50
+        tl2 = m.fpTabG.createChild("Label")
+        tl2.translation = [660 + i * 230, 190]
+        tl2.width = 210
+        tl2.height = 50
+        tl2.horizAlign = "center"
+        tl2.vertAlign = "center"
+        tl2.font = "font:SmallBoldSystemFont"
+        m.fpTabBg.Push(tb2)
+        m.fpTabL.Push(tl2)
+    end for
+    m.fpMenuRing = m.fpTabG.createChild("Rectangle")
+    m.fpMenuRing.translation = [1384, 189]
+    m.fpMenuRing.width = 352
+    m.fpMenuRing.height = 62
+    m.fpMenuRing.color = "0xF0BE3CFF"
+    mb = m.fpTabG.createChild("Rectangle")
+    mb.translation = [1390, 195]
+    mb.width = 340
+    mb.height = 50
+    mb.color = "0x000000D0"
+    m.fpMenuLabel = m.fpTabG.createChild("Label")
+    m.fpMenuLabel.translation = [1390, 195]
+    m.fpMenuLabel.width = 340
+    m.fpMenuLabel.height = 50
+    m.fpMenuLabel.horizAlign = "center"
+    m.fpMenuLabel.vertAlign = "center"
+    m.fpMenuLabel.font = "font:SmallBoldSystemFont"
+    m.fpMenuLabel.color = "0xFFFFFFFF"
+    m.fpListG = g.createChild("Group")
+    m.fpListG.visible = false
+    lb = m.fpListG.createChild("Rectangle")
+    lb.translation = [660, 270]
+    lb.width = 1080
+    lb.height = 450
+    lb.color = "0x000000FF"
+    m.flBig = m.fpListG.createChild("Poster")
+    m.flBig.translation = [660, 270]
+    m.flBig.width = 1080
+    m.flBig.height = 450
+    m.flBig.loadDisplayMode = "scaleToZoom"
+    m.flBadge = m.fpListG.createChild("Poster")
+    m.flBadge.uri = "pkg:/images/mychannel/play_badge.png"
+    m.flBadge.translation = [1140, 435]
+    m.flBadge.width = 120
+    m.flBadge.height = 120
+    band2 = m.fpListG.createChild("Rectangle")
+    band2.translation = [660, 640]
+    band2.width = 1080
+    band2.height = 80
+    band2.color = "0x000000B0"
+    m.flTitle = m.fpListG.createChild("Label")
+    m.flTitle.translation = [690, 640]
+    m.flTitle.width = 1020
+    m.flTitle.height = 80
+    m.flTitle.vertAlign = "center"
+    m.flTitle.font = "font:MediumBoldSystemFont"
+    m.flTitle.color = "0xFFFFFFFF"
+    m.flRing = m.fpListG.createChild("Rectangle")
+    m.flRing.width = 210
+    m.flRing.height = 122
+    m.flRing.color = "0xF0BE3CFF"
+    m.flThumbs = []
+    for i = 0 to 4
+        fx = 660 + i * 220
+        fb2 = m.fpListG.createChild("Rectangle")
+        fb2.translation = [fx, 740]
+        fb2.width = 200
+        fb2.height = 112
+        fb2.color = "0x000000FF"
+        fp2 = m.fpListG.createChild("Poster")
+        fp2.translation = [fx, 740]
+        fp2.width = 200
+        fp2.height = 112
+        fp2.loadDisplayMode = "scaleToZoom"
+        m.flThumbs.Push({ bg: fb2, ps: fp2 })
+    end for
+    m.flInfo = m.fpListG.createChild("Label")
+    m.flInfo.translation = [660, 880]
+    m.flInfo.width = 1080
+    m.flInfo.horizAlign = "center"
+    m.flInfo.font = "font:SmallSystemFont"
+    m.flInfo.color = "0x9FC6F0FF"
+    m.fpPopG = g.createChild("Group")
+    m.fpPopG.visible = false
+    m.fpPopBg = m.fpPopG.createChild("Rectangle")
+    m.fpPopBg.translation = [1390, 253]
+    m.fpPopBg.width = 340
+    m.fpPopBg.color = "0x0B1B33F0"
+    m.fpPopHi = m.fpPopG.createChild("Rectangle")
+    m.fpPopHi.width = 332
+    m.fpPopHi.height = 52
+    m.fpPopHi.color = "0xF0BE3CFF"
+    m.fpPopL = []
+    for i = 0 to 4
+        pl2 = m.fpPopG.createChild("Label")
+        pl2.translation = [1414, 261 + i * 56]
+        pl2.width = 300
+        pl2.height = 52
+        pl2.vertAlign = "center"
+        pl2.font = "font:SmallBoldSystemFont"
+        m.fpPopL.Push(pl2)
+    end for
+    m.channel.insertChild(g, m.channel.getChildCount() - 2)
+end sub
+
+function fmTagged(p as Object, kind as String) as Object
+    nm = getText(p, "name")
+    out = []
+    for each it in m.ch[kind]
+        hit = false
+        for each t in getList(it, "people")
+            if t = nm then hit = true
+        end for
+        if not hit and nm <> "" and Instr(1, getText(it, "who"), nm) > 0 then hit = true
+        if hit then out.Push(it)
+    end for
+    return out
+end function
+
+function fpTabList(p as Object) as Object
+    tabs = ["Profile"]
+    for each t in ["Photos", "Videos", "Recipes", "Music"]
+        if fmTagged(p, LCase(t)).Count() > 0 then tabs.Push(t)
+    end for
+    return tabs
+end function
+
+sub drawPersonList(p as Object, kind as String)
+    L = fmTagged(p, kind)
+    n = L.Count()
+    if m.fpSel >= n then m.fpSel = n - 1
+    if m.fpSel < 0 then m.fpSel = 0
+    if n = 0 then return
+    it = L[m.fpSel]
+    th = getText(it, "thumb")
+    if th = "" then th = getText(it, "record")
+    m.flBig.uri = th
+    if kind = "music" then m.flBig.loadDisplayMode = "scaleToFit" else m.flBig.loadDisplayMode = "scaleToZoom"
+    m.flBadge.visible = (getText(it, "video") <> "")
+    m.flTitle.text = getText(it, "title")
+    if getText(it, "artist") <> "" then m.flTitle.text = m.flTitle.text + "   ·   " + getText(it, "artist")
+    first = Int(m.fpSel / 5) * 5
+    for i = 0 to 4
+        k = first + i
+        t = m.flThumbs[i]
+        t.bg.visible = (k < n)
+        t.ps.visible = (k < n)
+        if k < n then
+            tt = getText(L[k], "thumb")
+            if tt = "" then tt = getText(L[k], "record")
+            t.ps.uri = tt
+        end if
+    end for
+    m.flRing.visible = (m.fpFoc = "body")
+    m.flRing.translation = [655 + (m.fpSel - first) * 220, 735]
+    m.flInfo.text = getText(p, "name") + "'s " + kind + "   ·   " + counter(m.fpSel, n)
+end sub
+
+sub openPersonItem(it as Object, kind as String)
+    if kind = "videos" then
+        startRecipeVideo(it)
+    else if kind = "photos" then
+        m.fmPhotoFull = true
+        m.fullPhoto.uri = getText(it, "image")
+        m.fullPhoto.width = 1920
+        m.fullPhoto.height = 1080
+        m.fullPhoto.translation = [0, 0]
+        m.fullBg.visible = true
+        m.fullPhoto.visible = true
+        m.hint.text = "Any button: Close"
+    else if kind = "music" then
+        for i = 0 to m.ch.music.Count() - 1
+            if getText(m.ch.music[i], "title") = getText(it, "title") and getText(m.ch.music[i], "artist") = getText(it, "artist") then m.pos.music = i
+        end for
+        toggleMusic()
+    else if kind = "recipes" then
+        idx = 0
+        for i = 0 to m.ch.recipes.Count() - 1
+            if getText(m.ch.recipes[i], "title") = getText(it, "title") then idx = i
+        end for
+        setColl("recipes")
+        m.rCat = 0
+        m.pos.recipes = idx
+        openRecipeFull()
+    end if
+end sub
+
+sub drawFamily()
+    if m.famView = invalid then return
+    L = fmList()
+    n = L.Count()
+    if m.pos.family >= n then m.pos.family = n - 1
+    if m.pos.family < 0 then m.pos.family = 0
+    sel = m.pos.family
+    m.fmCatLabel.text = "Categories: " + fmCats()[m.fmCat]
+    m.fmCatRing.visible = (m.fmOn and m.fmFoc = "cat" and not m.fmPop and not m.fmProf)
+    m.fmPopG.visible = m.fmPop
+    for i = 0 to m.fmPopLabels.Count() - 1
+        if i = m.fmPi then m.fmPopLabels[i].color = "0x0B1B33FF" else m.fmPopLabels[i].color = "0xFFFFFFFF"
+    end for
+    m.fmPopHi.translation = [1394, 348 + m.fmPi * 56]
+    m.fmBday.text = nextBirthday()
+    m.fmProfG.visible = m.fmProf
+    m.fpTabG.visible = m.fmProf
+    m.fpListG.visible = false
+    m.fmTopG.visible = not m.fmProf
+    m.fmCardsG.visible = (not m.fmProf and not m.fmGrid)
+    m.fmGridG.visible = (not m.fmProf and m.fmGrid)
+    if m.fmProf then
+        drawProfile(L)
+        return
+    end if
+    showRing = (m.fmOn and m.fmFoc = "row" and not m.fmPop and n > 0)
+    if not m.fmGrid then
+        first = Int(sel / 2) * 2
+        for i = 0 to 1
+            k = first + i
+            c = m.fmCards[i]
+            vis = (k < n)
+            c.bg.visible = vis
+            c.av.visible = vis
+            c.nm.visible = vis
+            c.rl.visible = vis
+            c.yr.visible = vis
+            if vis then
+                p = L[k]
+                c.av.uri = fmAvatar(p)
+                c.nm.text = getText(p, "name")
+                if getText(p, "died") <> "" then c.rl.text = getText(p, "relation") + "  ·  In memory" else c.rl.text = getText(p, "relation")
+                c.yr.text = fmYears(p)
+            end if
+            big = (vis and m.fmBig and k = sel and m.fmOn)
+            if big then
+                c.av.translation = [660 + i * 560, 360]
+                c.av.width = 520
+                c.av.height = 520
+                c.nm.visible = false
+                c.rl.visible = false
+                c.yr.visible = false
+            else
+                c.av.translation = [770 + i * 560, 380]
+                c.av.width = 300
+                c.av.height = 300
+            end if
+        end for
+        m.fmCardRing.visible = showRing
+        m.fmCardRing.translation = [655 + (sel - first) * 560, 355]
+    else
+        first = Int(sel / 12) * 12
+        for i = 0 to 11
+            k = first + i
+            t = m.fmTiles[i]
+            vis = (k < n)
+            t.bg.visible = vis
+            t.av.visible = vis
+            t.nm.visible = vis
+            if vis then
+                t.av.uri = fmAvatar(L[k])
+                t.nm.text = getText(L[k], "name")
+            end if
+        end for
+        j = sel - first
+        m.fmGridRing.visible = showRing
+        m.fmGridRing.translation = [655 + (j mod 4) * 275, 345 + Int(j / 4) * 185]
+    end if
+    if n = 0 then m.fmInfo.text = "No one here yet" else m.fmInfo.text = getText(L[sel], "name") + "   ·   " + getText(L[sel], "relation") + "   ·   " + counter(sel, n)
+    if m.fmGrid then vw = "Card view" else vw = "Grid view"
+    if m.fmPop then
+        m.hint.text = "Up/Down: Choose    OK: Select    Back: Close"
+    else if m.fmOn and m.fmFoc = "cat" then
+        m.hint.text = "OK: Choose a category    Down: Back to family    Back: Menu"
+    else if m.fmOn then
+        if m.fmBig then
+            m.hint.text = "OK: Open profile    Up: Smaller picture    Left/Right: Browse    Back: Menu"
+        else if m.fmGrid then
+            m.hint.text = "OK: Open profile    Star button: " + vw + "    Up: Categories    Back: Menu"
+        else
+            m.hint.text = "OK: Open profile    Down: Bigger picture    Star button: " + vw + "    Up: Categories    Back: Menu"
+        end if
+    else
+        m.hint.text = "Right: Browse the family    OK: Open"
+    end if
+end sub
+
+sub drawProfile(L as Object)
+    if L.Count() = 0 then
+        m.fmProf = false
+        return
+    end if
+    p = L[m.pos.family]
+    tabs = fpTabList(p)
+    if m.fpTab >= tabs.Count() then m.fpTab = 0
+    for i = 0 to 3
+        m.fpTabL[i].visible = false
+        m.fpTabBg[i].visible = false
+    end for
+    m.fpMenuLabel.text = "Menu: " + tabs[m.fpTab]
+    m.fpMenuRing.visible = (m.fpFoc = "tabs")
+    m.fpPopG.visible = (m.fpFoc = "pop")
+    m.fpPopBg.height = tabs.Count() * 56 + 16
+    if m.fpPi >= tabs.Count() then m.fpPi = 0
+    for i = 0 to 4
+        if i < tabs.Count() then
+            m.fpPopL[i].text = tabs[i]
+            m.fpPopL[i].visible = true
+            if i = m.fpPi then m.fpPopL[i].color = "0x0B1B33FF" else m.fpPopL[i].color = "0xFFFFFFFF"
+        else
+            m.fpPopL[i].visible = false
+        end if
+    end for
+    m.fpPopHi.translation = [1394, 261 + m.fpPi * 56]
+    if tabs[m.fpTab] <> "Profile" then
+        m.fmProfG.visible = false
+        m.fpListG.visible = true
+        drawPersonList(p, LCase(tabs[m.fpTab]))
+        if m.fpFoc = "pop" then
+            m.hint.text = "Up/Down: Choose    OK: Select    Back: Close list"
+        else if m.fpFoc = "tabs" then
+            m.hint.text = "OK: Open menu    Down: Back to page    Back: Family"
+        else if tabs[m.fpTab] = "Music" then
+            m.hint.text = "OK: Play / Pause    Left/Right: Browse    Up: Menu    Back: Family"
+        else if tabs[m.fpTab] = "Videos" then
+            m.hint.text = "OK: Play video    Left/Right: Browse    Up: Menu    Back: Family"
+        else
+            m.hint.text = "OK: Open    Left/Right: Browse    Up: Menu    Back: Family"
+        end if
+        return
+    end if
+    m.fpAv.uri = fmAvatar(p)
+    died = getText(p, "died")
+    m.fpMem.visible = (died <> "")
+    m.fpName.text = getText(p, "name")
+    m.fpRel.text = getText(p, "relation")
+    if getText(p, "occupation") <> "" then m.fpOcc.text = "Occupation:  " + getText(p, "occupation") else m.fpOcc.text = ""
+    if died <> "" then m.fpDates.text = getText(p, "born") + "  –  " + died else m.fpDates.text = "Birthday:  " + getText(p, "born")
+    if getText(p, "knownFor") <> "" then m.fpKnown.text = "Known for:  " + getText(p, "knownFor") else m.fpKnown.text = ""
+    ob = getList(p, "obituary")
+    hasOb = (ob.Count() > 0)
+    m.fpObG.visible = hasOb
+    if hasOb then
+        if m.fmOb >= ob.Count() then m.fmOb = ob.Count() - 1
+        m.fpObT.text = "Obituary    " + Stri(m.fmOb + 1).Trim() + " / " + Stri(ob.Count()).Trim()
+        m.fpObB.text = ob[m.fmOb]
+    end if
+    names = { facebook: "Facebook", instagram: "Instagram", tiktok: "TikTok" }
+    soc = getList(p, "social")
+    shown = 0
+    for i = 0 to 2
+        q = m.fpQr[i]
+        if not hasOb and i < soc.Count() then
+            q.qp.uri = "pkg:/images/mychannel/qr_social_" + soc[i] + ".png"
+            nmv = names[soc[i]]
+            if nmv = invalid then nmv = soc[i]
+            q.ql.text = nmv
+            q.qp.visible = true
+            q.ql.visible = true
+            shown = shown + 1
+        else
+            q.qp.visible = false
+            q.ql.visible = false
+        end if
+    end for
+    m.fpScan.visible = (shown > 0)
+    if m.fpFoc = "pop" then
+        m.hint.text = "Up/Down: Choose    OK: Select    Back: Close list"
+        return
+    end if
+    if m.fpFoc = "tabs" then
+        m.hint.text = "OK: Open menu    Down: Back to page    Back: Family"
+        return
+    end if
+    if hasOb then
+        m.hint.text = "Left/Right: Read on    Up: Menu    Back: Family"
+    else
+        m.hint.text = "Left/Right: Next person    Up: Menu    Back: Family"
+    end if
+end sub
+
+sub famEnter()
+    if fmList().Count() = 0 then return
+    m.fmOn = true
+    m.fmFoc = "row"
+    m.fmClock = CreateObject("roTimespan")
+    m.keys.setFocus(true)
+    drawFamily()
+end sub
+
+sub famExit()
+    m.fmOn = false
+    m.fmBig = false
+    m.fmPop = false
+    m.fmProf = false
+    m.fmFoc = "row"
+    m.menu.setFocus(true)
+    drawFamily()
+end sub
+
+function famKey(key as String, press as Boolean) as Boolean
+    if not m.fmOn then
+        if press and key = "right" then
+            famEnter()
+            return true
+        end if
+        return false
+    end if
+    if not press then return true
+    if key = "OK" and m.fmClock <> invalid and m.fmClock.TotalMilliseconds() < 500 then return true
+    L = fmList()
+    n = L.Count()
+    if m.fmPhotoFull = true then
+        m.fmPhotoFull = false
+        m.fullBg.visible = false
+        m.fullPhoto.visible = false
+        drawFamily()
+        return true
+    end if
+    if m.fmProf then
+        if n = 0 then
+            m.fmProf = false
+            drawFamily()
+            return true
+        end if
+        pp = L[m.pos.family]
+        tabs = fpTabList(pp)
+        if m.fpTab >= tabs.Count() then m.fpTab = 0
+        if m.fpFoc = "pop" then
+            if key = "up" then
+                if m.fpPi > 0 then m.fpPi = m.fpPi - 1
+            else if key = "down" then
+                if m.fpPi + 1 < tabs.Count() then m.fpPi = m.fpPi + 1
+            else if key = "OK" then
+                m.fpTab = m.fpPi
+                m.fpSel = 0
+                m.fpFoc = "body"
+            else if key = "back" then
+                m.fpFoc = "tabs"
+            end if
+            drawFamily()
+            return true
+        end if
+        if key = "back" then
+            m.fmProf = false
+        else if m.fpFoc = "tabs" then
+            if key = "OK" then
+                m.fpFoc = "pop"
+                m.fpPi = m.fpTab
+            else if key = "down" then
+                m.fpFoc = "body"
+            end if
+        else if tabs[m.fpTab] = "Profile" then
+            obc = getList(pp, "obituary").Count()
+            if key = "up" then
+                m.fpFoc = "tabs"
+            else if key = "right" then
+                if m.fmOb + 1 < obc then
+                    m.fmOb = m.fmOb + 1
+                else if m.pos.family + 1 < n then
+                    m.pos.family = m.pos.family + 1
+                    m.fmOb = 0
+                    m.fpTab = 0
+                end if
+            else if key = "left" then
+                if m.fmOb > 0 then
+                    m.fmOb = m.fmOb - 1
+                else if m.pos.family > 0 then
+                    m.pos.family = m.pos.family - 1
+                    m.fmOb = 0
+                    m.fpTab = 0
+                end if
+            end if
+        else
+            kind = LCase(tabs[m.fpTab])
+            items = fmTagged(pp, kind)
+            if key = "up" then
+                m.fpFoc = "tabs"
+            else if key = "left" then
+                if m.fpSel > 0 then m.fpSel = m.fpSel - 1
+            else if key = "right" then
+                if m.fpSel + 1 < items.Count() then m.fpSel = m.fpSel + 1
+            else if (key = "OK" or key = "play") and items.Count() > 0 then
+                openPersonItem(items[m.fpSel], kind)
+                return true
+            end if
+        end if
+        drawFamily()
+        return true
+    end if
+    if m.fmPop then
+        cc = fmCats().Count()
+        if key = "up" then
+            if m.fmPi > 0 then m.fmPi = m.fmPi - 1
+        else if key = "down" then
+            if m.fmPi + 1 < cc then m.fmPi = m.fmPi + 1
+        else if key = "OK" then
+            oldCat = m.fmCat
+            m.fmCat = m.fmPi
+            if fmList().Count() = 0 then
+                m.fmCat = oldCat
+            else
+                m.pos.family = 0
+                m.fmPop = false
+                m.fmFoc = "row"
+            end if
+        else if key = "back" then
+            m.fmPop = false
+        end if
+        drawFamily()
+        return true
+    end if
+    if m.fmFoc = "cat" then
+        if key = "OK" then
+            m.fmPop = true
+            m.fmPi = m.fmCat
+        else if key = "down" then
+            m.fmFoc = "row"
+        else if key = "back" then
+            famExit()
+            return true
+        end if
+        drawFamily()
+        return true
+    end if
+    if key = "left" then
+        if m.pos.family > 0 then
+            m.pos.family = m.pos.family - 1
+        else
+            famExit()
+            return true
+        end if
+    else if key = "right" then
+        if m.pos.family + 1 < n then m.pos.family = m.pos.family + 1
+    else if key = "up" then
+        if m.fmBig then
+            m.fmBig = false
+        else if m.fmGrid and (m.pos.family mod 12) >= 4 then
+            m.pos.family = m.pos.family - 4
+        else
+            m.fmFoc = "cat"
+        end if
+    else if key = "down" then
+        if m.fmGrid then
+            if m.pos.family + 4 < n then m.pos.family = m.pos.family + 4
+        else
+            m.fmBig = true
+        end if
+    else if key = "OK" then
+        if n > 0 then
+            m.fmProf = true
+            m.fmOb = 0
+            m.fpTab = 0
+            m.fpSel = 0
+            m.fpFoc = "body"
+            if m.fmBig then
+                tl = fpTabList(L[m.pos.family])
+                for ti = 0 to tl.Count() - 1
+                    if tl[ti] = "Photos" then m.fpTab = ti
+                end for
+            end if
+        end if
+    else if key = "options" or key = "play" then
+        m.fmGrid = not m.fmGrid
+        m.fmBig = false
+    else if key = "back" then
+        famExit()
+        return true
+    end if
+    drawFamily()
+    return true
+end function
+
+sub buildRecipes()
+    m.coll = "recipes"
+    m.tipWait = false
+    m.pShowOn = false
+    m.rOn = false
+    m.rCard = -1
+    m.rCat = 0
+    m.rFoc = "row"
+    m.rPop = false
+    m.rPi = 0
+    m.rFull = false
+    m.rVidBack = false
+    g = CreateObject("roSGNode", "Group")
+    g.visible = false
+    m.rView = g
+    m.rRow = g.createChild("Group")
+    bg = m.rRow.createChild("Rectangle")
+    bg.translation = [660, 270]
+    bg.width = 1080
+    bg.height = 480
+    bg.color = "0x000000FF"
+    m.rBig = m.rRow.createChild("Poster")
+    m.rBig.translation = [660, 270]
+    m.rBig.width = 1080
+    m.rBig.height = 480
+    m.rBig.loadDisplayMode = "scaleToZoom"
+    m.rBigBadge = m.rRow.createChild("Poster")
+    m.rBigBadge.uri = "pkg:/images/mychannel/play_badge.png"
+    m.rBigBadge.translation = [1140, 450]
+    m.rBigBadge.width = 120
+    m.rBigBadge.height = 120
+    m.rBigBadge.visible = false
+    band = m.rRow.createChild("Rectangle")
+    band.translation = [660, 670]
+    band.width = 1080
+    band.height = 80
+    band.color = "0x000000B0"
+    m.rTitle = m.rRow.createChild("Label")
+    m.rTitle.translation = [690, 670]
+    m.rTitle.width = 1020
+    m.rTitle.height = 80
+    m.rTitle.vertAlign = "center"
+    m.rTitle.font = "font:MediumBoldSystemFont"
+    m.rTitle.color = "0xFFFFFFFF"
+    m.catRing = m.rRow.createChild("Rectangle")
+    m.catRing.translation = [1384, 276]
+    m.catRing.width = 352
+    m.catRing.height = 62
+    m.catRing.color = "0xF0BE3CFF"
+    m.catRing.visible = false
+    cbg = m.rRow.createChild("Rectangle")
+    cbg.translation = [1390, 282]
+    cbg.width = 340
+    cbg.height = 50
+    cbg.color = "0x000000D0"
+    m.catLabel = m.rRow.createChild("Label")
+    m.catLabel.translation = [1390, 282]
+    m.catLabel.width = 340
+    m.catLabel.height = 50
+    m.catLabel.horizAlign = "center"
+    m.catLabel.vertAlign = "center"
+    m.catLabel.font = "font:SmallBoldSystemFont"
+    m.catLabel.color = "0xFFFFFFFF"
+    m.rFocus = m.rRow.createChild("Rectangle")
+    m.rFocus.translation = [655, 765]
+    m.rFocus.width = 210
+    m.rFocus.height = 122
+    m.rFocus.color = "0xF0BE3CFF"
+    m.rFocus.visible = false
+    m.rCards = []
+    m.rBadges = []
+    for i = 0 to 4
+        x = 660 + i * 220
+        cb = m.rRow.createChild("Rectangle")
+        cb.translation = [x, 770]
+        cb.width = 200
+        cb.height = 112
+        cb.color = "0x000000FF"
+        cp = m.rRow.createChild("Poster")
+        cp.translation = [x, 770]
+        cp.width = 200
+        cp.height = 112
+        cp.loadDisplayMode = "scaleToZoom"
+        m.rCards.Push(cp)
+        bd = m.rRow.createChild("Poster")
+        bd.uri = "pkg:/images/mychannel/play_badge.png"
+        bd.translation = [x + 72, 798]
+        bd.width = 56
+        bd.height = 56
+        bd.visible = false
+        m.rBadges.Push(bd)
+    end for
+    m.rInfo = m.rRow.createChild("Label")
+    m.rInfo.translation = [660, 900]
+    m.rInfo.width = 1080
+    m.rInfo.horizAlign = "center"
+    m.rInfo.font = "font:SmallSystemFont"
+    m.rInfo.color = "0x9FC6F0FF"
+    m.rCardL = g.createChild("Group")
+    m.rCardL.visible = false
+    tb = m.rCardL.createChild("Rectangle")
+    tb.translation = [660, 280]
+    tb.width = 460
+    tb.height = 259
+    tb.color = "0x000000FF"
+    m.cThumb = m.rCardL.createChild("Poster")
+    m.cThumb.translation = [660, 280]
+    m.cThumb.width = 460
+    m.cThumb.height = 259
+    m.cThumb.loadDisplayMode = "scaleToZoom"
+    m.cBadge = m.rCardL.createChild("Poster")
+    m.cBadge.uri = "pkg:/images/mychannel/play_badge.png"
+    m.cBadge.translation = [854, 374]
+    m.cBadge.width = 72
+    m.cBadge.height = 72
+    m.cBadge.visible = false
+    m.cNav = m.rCardL.createChild("Label")
+    m.cNav.translation = [660, 555]
+    m.cNav.width = 460
+    m.cNav.horizAlign = "center"
+    m.cNav.font = "font:SmallSystemFont"
+    m.cNav.color = "0x9FC6F0FF"
+    m.cMicro = m.rCardL.createChild("Label")
+    m.cMicro.visible = false
+    m.cDesc = m.rCardL.createChild("Label")
+    m.cDesc.translation = [660, 680]
+    m.cDesc.width = 880
+    m.cDesc.height = 270
+    m.cDesc.wrap = true
+    m.cDesc.font = "font:MediumSystemFont"
+    m.cDesc.color = "0xFFFFFFFF"
+    m.cCredit = m.rCardL.createChild("Label")
+    m.cCredit.translation = [780, 990]
+    m.cCredit.width = 1000
+    m.cCredit.height = 40
+    m.cCredit.horizAlign = "right"
+    m.cCredit.font = "font:SmallestSystemFont"
+    m.cCredit.color = "0x9A9A9AFF"
+    m.cQrLabel = m.rCardL.createChild("Label")
+    m.cQrLabel.translation = [1610, 770]
+    m.cQrLabel.width = 170
+    m.cQrLabel.horizAlign = "center"
+    m.cQrLabel.font = "font:SmallBoldSystemFont"
+    m.cQrLabel.color = "0xFFFFFFFF"
+    m.cQrBg = m.rCardL.createChild("Rectangle")
+    m.cQrBg.translation = [1620, 808]
+    m.cQrBg.width = 160
+    m.cQrBg.height = 160
+    m.cQrBg.color = "0xFFFFFFFF"
+    m.cQr = m.rCardL.createChild("Poster")
+    m.cQr.translation = [1625, 813]
+    m.cQr.width = 150
+    m.cQr.height = 150
+    m.cTitle = m.rCardL.createChild("Label")
+    m.cTitle.translation = [1160, 280]
+    m.cTitle.width = 600
+    m.cTitle.height = 110
+    m.cTitle.wrap = true
+    m.cTitle.maxLines = 2
+    m.cTitle.font = "font:LargeBoldSystemFont"
+    m.cTitle.color = "0xFFFFFFFF"
+    m.cBody = m.rCardL.createChild("Label")
+    m.cBody.translation = [1160, 400]
+    m.cBody.width = 600
+    m.cBody.height = 290
+    m.cBody.wrap = true
+    m.cBody.font = "font:MediumSystemFont"
+    m.cBody.color = "0xFFFFFFFF"
+    m.rPopG = g.createChild("Group")
+    m.rPopG.visible = false
+    cats = recCats()
+    pb = m.rPopG.createChild("Rectangle")
+    pb.translation = [1390, 340]
+    pb.width = 340
+    pb.height = cats.Count() * 56 + 16
+    pb.color = "0x0B1B33F0"
+    m.popHi = m.rPopG.createChild("Rectangle")
+    m.popHi.width = 332
+    m.popHi.height = 52
+    m.popHi.color = "0xF0BE3CFF"
+    m.popLabels = []
+    for i = 0 to cats.Count() - 1
+        pl = m.rPopG.createChild("Label")
+        pl.translation = [1414, 348 + i * 56]
+        pl.width = 300
+        pl.height = 52
+        pl.vertAlign = "center"
+        pl.font = "font:SmallBoldSystemFont"
+        pl.text = cats[i]
+        m.popLabels.Push(pl)
+    end for
+    m.channel.insertChild(g, m.channel.getChildCount() - 2)
+end sub
+
+sub setColl(k as String)
+    if m.coll = k then return
+    if m.collSave = invalid then m.collSave = {}
+    m.collSave[m.coll] = { pos: m.pos.recipes, cat: m.rCat }
+    m.coll = k
+    sv = m.collSave[k]
+    if sv = invalid then
+        m.pos.recipes = 0
+        m.rCat = 0
+    else
+        m.pos.recipes = sv.pos
+        m.rCat = sv.cat
+    end if
+end sub
+function collWord() as String
+    if m.coll = "photos" then return "Photo"
+    if m.coll = "videos" then return "Video"
+    return "Recipe"
+end function
+function infoWord() as String
+    if m.coll <> "recipes" then return "details"
+    return "recipe"
+end function
+function stepWord() as String
+    if m.coll <> "recipes" then return "Next story"
+    return "Next step"
+end function
+function videoCards(r as Object) as Object
+    out = []
+    nl = Chr(10)
+    meta = ""
+    for each k in ["date", "category", "length"]
+        if getText(r, k) <> "" then
+            if meta <> "" then meta = meta + "   ·   "
+            meta = meta + getText(r, k)
+        end if
+    end for
+    if getText(r, "filmedBy") <> "" then meta = meta + nl + byWord() + " " + getText(r, "filmedBy")
+    out.Push({ title: getText(r, "title"), body: meta })
+    for each q in [["who", "Who's in it"], ["what", "What happened"], ["where", "Where it was"], ["favorite", "Favorite moment"]]
+        if getText(r, q[0]) <> "" then out.Push({ title: q[1], body: getText(r, q[0]) })
+    end for
+    L = recList()
+    if m.pos.recipes + 1 < L.Count() then
+        out.Push({ title: "Next " + LCase(collWord()), body: getText(L[m.pos.recipes + 1], "title") + nl + nl + "Press Right to see it." })
+    else
+        out.Push({ title: "That's the last one", body: "Press Left to go back through the stories, or Back to see all the " + LCase(collWord()) + "s." })
+    end if
+    return out
+end function
+function byWord() as String
+    if m.coll = "photos" then return "Photo by"
+    return "Filmed by"
+end function
+
+sub togglePhotoShow()
+    if m.pShowOn = true then
+        stopPhotoShow()
+        showRecipeFull()
+        return
+    end if
+    if m.pShowT = invalid then
+        m.pShowT = m.top.createChild("Timer")
+        m.pShowT.duration = 5
+        m.pShowT.repeat = true
+        m.pShowT.observeField("fire", "onPhotoShow")
+    end if
+    m.pShowOn = true
+    m.rPanel = false
+    m.pShowT.control = "start"
+    showRecipeFull()
+end sub
+
+sub stopPhotoShow()
+    m.pShowOn = false
+    if m.pShowT <> invalid then m.pShowT.control = "stop"
+end sub
+
+sub onPhotoShow()
+    if m.pShowOn <> true or not m.rFull then return
+    n = recList().Count()
+    if n = 0 then return
+    if m.pos.recipes + 1 < n then m.pos.recipes = m.pos.recipes + 1 else m.pos.recipes = 0
+    m.rFCard = 0
+    showRecipeFull()
+    drawRecipe()
+end sub
+
+function recCats() as Object
+    if m.coll = "photos" then return ["All photos", "Family", "Birthdays", "Holidays", "Pets", "Proud Moments"]
+    if m.coll = "videos" then return ["All videos", "Family", "Birthdays", "Holidays", "Pets", "Proud Moments"]
+    return ["All recipes", "Breakfast", "Lunch", "Dinner", "Videos", "Family Recipes"]
+end function
+
+function recList() as Object
+    cat = recCats()[m.rCat]
+    out = []
+    for each r in m.ch[m.coll]
+        ok = false
+        if m.rCat = 0 then
+            ok = true
+        else if m.coll = "recipes" and cat = "Videos" then
+            ok = (getText(r, "video") <> "")
+        else if m.coll = "recipes" and cat = "Family Recipes" then
+            ok = (getText(r, "source") = "")
+        else
+            ok = (getText(r, "category") = cat)
+        end if
+        if ok then out.Push(r)
+    end for
+    return out
+end function
+
+function curRecipe() as Dynamic
+    L = recList()
+    if L.Count() = 0 then return invalid
+    if m.pos.recipes >= L.Count() then m.pos.recipes = L.Count() - 1
+    if m.pos.recipes < 0 then m.pos.recipes = 0
+    return L[m.pos.recipes]
+end function
+
+function playWord(r as Dynamic) as String
+    if r = invalid then return "Play"
+    return "Open " + LCase(collWord())
+end function
+
+function recipeCards(r as Object) as Object
+    if m.coll <> "recipes" then return videoCards(r)
+    out = []
+    nl = Chr(10)
+    out.Push({ title: getText(r, "title"), body: getText(r, "yield") + nl + "Prep " + getText(r, "prep") + nl + "Cook " + getText(r, "cook") })
+    for each g in getList(r, "ingredients")
+        t = ""
+        for each it in getList(g, "items")
+            t = t + "•  " + it + nl
+        end for
+        out.Push({ title: "Ingredients: " + getText(g, "group"), body: t })
+    end for
+    steps = getList(r, "steps")
+    k = 1
+    for each st in steps
+        lines = getList(st, "lines")
+        if lines.Count() > 0 then
+            t = ""
+            j = 1
+            for each ln in lines
+                t = t + Stri(j).Trim() + ".  " + ln + nl
+                j = j + 1
+            end for
+        else
+            t = getText(st, "text")
+        end if
+        out.Push({ title: "Step " + Stri(k).Trim() + " of " + Stri(steps.Count()).Trim() + ": " + getText(st, "title"), body: t })
+        k = k + 1
+    end for
+    L = recList()
+    if m.pos.recipes + 1 < L.Count() then
+        out.Push({ title: "Next recipe", body: getText(L[m.pos.recipes + 1], "title") + nl + nl + "Press Right to start it." })
+    else
+        out.Push({ title: "That's all in this category", body: "Press Back to see the list." })
+    end if
+    return out
+end function
+
+sub drawRecipe()
+    L = recList()
+    n = L.Count()
+    m.catLabel.text = "Category: " + recCats()[m.rCat]
+    for i = 0 to m.popLabels.Count() - 1
+        m.popLabels[i].text = recCats()[i]
+    end for
+    m.catRing.visible = (m.rOn and m.rFoc = "cat" and m.rCard < 0)
+    m.rPopG.visible = m.rPop
+    for i = 0 to m.popLabels.Count() - 1
+        if i = m.rPi then m.popLabels[i].color = "0x0B1B33FF" else m.popLabels[i].color = "0xFFFFFFFF"
+    end for
+    m.popHi.translation = [1394, 348 + m.rPi * 56]
+    if n = 0 then
+        m.rRow.visible = true
+        m.rCardL.visible = false
+        m.rBig.uri = ""
+        m.rTitle.text = "No " + LCase(collWord()) + "s in this category yet"
+        for i = 0 to 4
+            m.rCards[i].visible = false
+        end for
+        m.rFocus.visible = false
+        m.rInfo.text = ""
+        m.rBigBadge.visible = false
+        for i = 0 to 4
+            m.rBadges[i].visible = false
+        end for
+        m.hint.text = "Up: Categories    Back: Menu"
+        return
+    end if
+    r = curRecipe()
+    if m.rCard < 0 then
+        m.rRow.visible = true
+        m.rCardL.visible = false
+        m.rBig.uri = getText(r, "thumb")
+        m.rBigBadge.visible = (getText(r, "video") <> "")
+        m.rTitle.text = getText(r, "title")
+        first = Int(m.pos.recipes / 5) * 5
+        for i = 0 to 4
+            if first + i < n then
+                m.rCards[i].uri = getText(L[first + i], "thumb")
+                m.rCards[i].visible = true
+                m.rBadges[i].visible = (getText(L[first + i], "video") <> "")
+            else
+                m.rCards[i].visible = false
+                m.rBadges[i].visible = false
+            end if
+        end for
+        m.rFocus.visible = (m.rOn and m.rFoc = "row" and not m.rPop)
+        m.rFocus.translation = [655 + (m.pos.recipes - first) * 220, 765]
+        if m.coll <> "recipes" then
+            m.rInfo.text = getText(r, "category") + "   ·   " + getText(r, "title")
+            if getText(r, "length") <> "" then m.rInfo.text = m.rInfo.text + "   ·   " + getText(r, "length")
+        else
+            m.rInfo.text = "Recipe " + counter(m.pos.recipes, n) + "   ·   " + getText(r, "yield") + "   ·   Prep " + getText(r, "prep") + "   ·   Cook " + getText(r, "cook")
+        end if
+        if m.rPop then
+            m.hint.text = "Up/Down: Choose    OK: Select    Back: Close"
+        else if m.rOn and m.rFoc = "cat" then
+            m.hint.text = "OK: Choose a category    Down: Back to " + LCase(collWord()) + "s    Back: Menu"
+        else if m.rOn then
+            m.hint.text = "OK: " + playWord(r) + "    Up: Categories    Back: Menu"
+        else
+            m.hint.text = "OK: " + playWord(r) + "    Right: Choose a " + LCase(collWord())
+        end if
+    else
+        cards = recipeCards(r)
+        if m.rCard >= cards.Count() then m.rCard = cards.Count() - 1
+        c = cards[m.rCard]
+        m.rRow.visible = false
+        m.rCardL.visible = true
+        m.cThumb.uri = getText(r, "thumb")
+        m.cBadge.visible = (getText(r, "video") <> "")
+        m.cNav.text = "Recipe " + counter(m.pos.recipes, n) + "   ·   Card " + counter(m.rCard, cards.Count())
+        m.cCredit.text = getText(r, "credit")
+        hasQr = (getText(r, "qr") <> "")
+        m.cQrBg.visible = hasQr
+        m.cQr.visible = hasQr
+        m.cQrLabel.visible = hasQr
+        m.cQr.uri = getText(r, "qr")
+        m.cQrLabel.text = getText(r, "qrLabel")
+        if m.cQrLabel.text = "" then m.cQrLabel.text = "Full recipe"
+        m.cTitle.text = c.title
+        if m.rMeasure = invalid then
+            m.rMeasure = m.top.createChild("Label")
+            m.rMeasure.visible = false
+            m.rMeasure.font = "font:LargeBoldSystemFont"
+        end if
+        m.rMeasure.text = c.title
+        if m.rMeasure.boundingRect().width > 600 then by = 405 else by = 345
+        m.cBody.translation = [1160, by]
+        if hasQr then m.cBody.height = 760 - by else m.cBody.height = 940 - by
+        m.cBody.text = c.body
+        if m.rCard = 0 then m.cDesc.text = getText(r, "description") else m.cDesc.text = ""
+        if hasQr then m.cDesc.width = 880 else m.cDesc.width = 1080
+        m.cMicro.text = ""
+        if m.rCard = 0 then
+            m.hint.text = "OK: " + playWord(r) + "    Right: Start cooking    Back: All recipes"
+        else
+            m.hint.text = "Left/Right: Cards    OK: " + playWord(r) + "    Back: All recipes"
+        end if
+    end if
+end sub
+
+sub exitRecipes()
+    m.rOn = false
+    m.rCard = -1
+    m.rPop = false
+    m.rFoc = "row"
+    m.menu.setFocus(true)
+    drawRecipe()
+end sub
+
+sub playRecipeVideo()
+    if m.video.visible or m.rFull then return
+    r = curRecipe()
+    if r = invalid then return
+    openRecipeFull()
+end sub
+
+sub startRecipeVideo(r as Object)
+    stopMusic()
+    hideSideTip()
+    m.tipWait = (m.coll = "videos")
+    c = CreateObject("roSGNode", "ContentNode")
+    c.url = getText(r, "video")
+    if getText(r, "short") <> "" then c.title = getText(r, "short") else c.title = getText(r, "title")
+    c.streamFormat = "mp4"
+    if Instr(1, c.url, ".m3u8") > 0 then c.streamFormat = "hls"
+    m.video.content = c
+    m.video.visible = true
+    m.video.setFocus(true)
+    m.video.control = "play"
+end sub
+
+sub openRecipeFull()
+    m.rFull = true
+    m.rPanel = true
+    m.rFCard = 0
+    m.fFoc = "photo"
+    m.fPop = false
+    m.rFullClock = CreateObject("roTimespan")
+    m.fullPhoto.width = 1920
+    m.fullPhoto.height = 1080
+    m.fullPhoto.translation = [0, 0]
+    m.fullBg.visible = true
+    m.fullPhoto.visible = true
+    if m.fullLabel <> invalid then m.fullLabel.visible = false
+    if m.fullCount <> invalid then m.fullCount.visible = false
+    m.keys.setFocus(true)
+    showRecipeFull()
+end sub
+
+sub showRecipeFull()
+    r = curRecipe()
+    if r = invalid then return
+    nl = Chr(10)
+    m.fullPhoto.uri = getText(r, "thumb")
+    if m.rHint = invalid then
+        m.rHintBg = m.top.createChild("Rectangle")
+        m.rHint = m.top.createChild("Label")
+        m.rHint.horizAlign = "center"
+        m.rHint.vertAlign = "center"
+        m.rHint.font = "font:SmallBoldSystemFont"
+        m.rHint.color = "0xFFFFFFFF"
+        m.rHintBg.color = "0x000000B0"
+    end if
+    m.rHintBg.translation = [160, 985]
+    m.rHintBg.width = 1600
+    m.rHintBg.height = 60
+    m.rHint.translation = [160, 985]
+    m.rHint.width = 1600
+    m.rHint.height = 60
+    if m.rFullTitle = invalid then
+        m.rFullTitleBg = m.top.createChild("Rectangle")
+        m.rFullTitleBg.translation = [0, 0]
+        m.rFullTitleBg.width = 1920
+        m.rFullTitleBg.height = 110
+        m.rFullTitleBg.color = "0x000000A0"
+        m.rFullTitle = m.top.createChild("Label")
+    end if
+    m.rFullTitle.translation = [560, 0]
+    m.rFullTitle.width = 800
+    m.rFullTitle.height = 110
+    m.rFullTitle.wrap = true
+    m.rFullTitle.maxLines = 2
+    m.rFullTitle.horizAlign = "center"
+    m.rFullTitle.vertAlign = "center"
+    m.rFullTitle.font = "font:MediumBoldSystemFont"
+    m.rFullTitle.color = "0xFFFFFFFF"
+    m.rFullTitle.text = getText(r, "title")
+    if m.fTopG = invalid then
+        m.fTopG = m.top.createChild("Group")
+        m.fCredit = m.fTopG.createChild("Label")
+        m.fCredit.translation = [40, 0]
+        m.fCredit.width = 500
+        m.fCredit.height = 110
+        m.fCredit.vertAlign = "center"
+        m.fCredit.font = "font:SmallSystemFont"
+        m.fCredit.color = "0xCCCCCCFF"
+        m.fCatBg = m.fTopG.createChild("Rectangle")
+        m.fCatBg.translation = [1400, 28]
+        m.fCatBg.width = 480
+        m.fCatBg.height = 54
+        m.fCat = m.fTopG.createChild("Label")
+        m.fCat.translation = [1400, 28]
+        m.fCat.width = 480
+        m.fCat.height = 54
+        m.fCat.horizAlign = "center"
+        m.fCat.vertAlign = "center"
+        m.fCat.font = "font:SmallBoldSystemFont"
+        m.rPanelG = m.top.createChild("Group")
+        pb = m.rPanelG.createChild("Rectangle")
+        pb.translation = [0, 560]
+        pb.width = 1920
+        pb.height = 410
+        pb.color = "0x000000D8"
+        m.pTitle = m.rPanelG.createChild("Label")
+        m.pTitle.translation = [120, 585]
+        m.pTitle.width = 1100
+        m.pTitle.height = 60
+        m.pTitle.font = "font:LargeBoldSystemFont"
+        m.pTitle.color = "0xFFFFFFFF"
+        m.pBody = m.rPanelG.createChild("Label")
+        m.pBody.translation = [120, 665]
+        m.pBody.width = 1100
+        m.pBody.height = 300
+        m.pBody.wrap = true
+        m.pBody.font = "font:MediumSystemFont"
+        m.pBody.color = "0xFFFFFFFF"
+        m.pNav = m.rPanelG.createChild("Label")
+        m.pNav.translation = [1240, 585]
+        m.pNav.width = 560
+        m.pNav.horizAlign = "right"
+        m.pNav.font = "font:SmallSystemFont"
+        m.pNav.color = "0x9FC6F0FF"
+        m.pCredit = m.rPanelG.createChild("Label")
+        m.pCredit.translation = [1240, 625]
+        m.pCredit.width = 560
+        m.pCredit.horizAlign = "right"
+        m.pCredit.font = "font:SmallestSystemFont"
+        m.pCredit.color = "0x9A9A9AFF"
+        m.pQrLabel = m.rPanelG.createChild("Label")
+        m.pQrLabel.translation = [1600, 680]
+        m.pQrLabel.width = 240
+        m.pQrLabel.horizAlign = "center"
+        m.pQrLabel.font = "font:SmallBoldSystemFont"
+        m.pQrLabel.color = "0xFFFFFFFF"
+        m.pQrBg = m.rPanelG.createChild("Rectangle")
+        m.pQrBg.translation = [1640, 720]
+        m.pQrBg.width = 160
+        m.pQrBg.height = 160
+        m.pQrBg.color = "0xFFFFFFFF"
+        m.pQr = m.rPanelG.createChild("Poster")
+        m.pQr.translation = [1645, 725]
+        m.pQr.width = 150
+        m.pQr.height = 150
+        m.pSub = m.rPanelG.createChild("Label")
+        m.pSub.translation = [120, 650]
+        m.pSub.width = 1100
+        m.pSub.font = "font:SmallSystemFont"
+        m.pSub.color = "0x9FC6F0FF"
+        m.pMid = m.rPanelG.createChild("Label")
+        m.pMid.translation = [160, 740]
+        m.pMid.width = 1600
+        m.pMid.horizAlign = "center"
+        m.pMid.font = "font:LargeBoldSystemFont"
+        m.pMid.color = "0xFFFFFFFF"
+        m.pFootL = m.rPanelG.createChild("Label")
+        m.pFootL.translation = [120, 905]
+        m.pFootL.width = 600
+        m.pFootL.font = "font:SmallSystemFont"
+        m.pFootL.color = "0x9FC6F0FF"
+        m.pFootR = m.rPanelG.createChild("Label")
+        m.pFootR.translation = [1200, 905]
+        m.pFootR.width = 600
+        m.pFootR.horizAlign = "right"
+        m.pFootR.font = "font:SmallSystemFont"
+        m.pFootR.color = "0x9FC6F0FF"
+        cats = recCats()
+        m.fPopG = m.top.createChild("Group")
+        fb = m.fPopG.createChild("Rectangle")
+        fb.translation = [1400, 120]
+        fb.width = 480
+        fb.height = cats.Count() * 56 + 16
+        fb.color = "0x0B1B33F0"
+        m.fPopHi = m.fPopG.createChild("Rectangle")
+        m.fPopHi.width = 472
+        m.fPopHi.height = 52
+        m.fPopHi.color = "0xF0BE3CFF"
+        m.fPopLabels = []
+        for i = 0 to cats.Count() - 1
+            fl = m.fPopG.createChild("Label")
+            fl.translation = [1430, 128 + i * 56]
+            fl.width = 430
+            fl.height = 52
+            fl.vertAlign = "center"
+            fl.font = "font:SmallBoldSystemFont"
+            fl.text = cats[i]
+            m.fPopLabels.Push(fl)
+        end for
+    end if
+    cr = getText(r, "credit")
+    ci = Instr(1, cr, "  ·  ")
+    if ci > 0 then cr = Left(cr, ci - 1)
+    m.fCredit.text = cr
+    m.fCat.text = "Categories: " + recCats()[m.rCat]
+    for i = 0 to m.fPopLabels.Count() - 1
+        m.fPopLabels[i].text = recCats()[i]
+    end for
+    if m.fFoc = "cat" and not m.fPop then
+        m.fCatBg.color = "0xF0BE3CFF"
+        m.fCat.color = "0x0B1B33FF"
+    else
+        m.fCatBg.color = "0x000000C0"
+        m.fCat.color = "0xFFFFFFFF"
+    end if
+    m.fPopG.visible = m.fPop
+    for i = 0 to m.fPopLabels.Count() - 1
+        if i = m.rPi then m.fPopLabels[i].color = "0x0B1B33FF" else m.fPopLabels[i].color = "0xFFFFFFFF"
+    end for
+    m.fPopHi.translation = [1404, 128 + m.rPi * 56]
+    m.rPanelG.visible = m.rPanel
+    if m.rPanel then
+        cards = recipeCards(r)
+        if m.rFCard >= cards.Count() then m.rFCard = cards.Count() - 1
+        if m.rFCard < 0 then m.rFCard = 0
+        c = cards[m.rFCard]
+        m.pTitle.text = c.title
+        if m.rFCard = 0 then m.pBody.text = c.body + nl + nl + getText(r, "description") else m.pBody.text = c.body
+        ni = getList(r, "ingredients").Count()
+        ns = getList(r, "steps").Count()
+        if m.rFCard = 0 then
+            m.pNav.text = "Overview"
+        else if m.rFCard <= ni then
+            m.pNav.text = "Ingredients " + Stri(m.rFCard).Trim() + " / " + Stri(ni).Trim()
+        else if m.rFCard <= ni + ns then
+            m.pNav.text = "Step " + Stri(m.rFCard - ni).Trim() + " / " + Stri(ns).Trim()
+        else
+            m.pNav.text = "Up next"
+            if m.pos.recipes + 1 >= recList().Count() then m.pNav.text = "The end" ' END2
+        end if
+        if m.coll <> "recipes" and m.rFCard > 0 and m.rFCard < cards.Count() - 1 then m.pNav.text = "Story " + Stri(m.rFCard).Trim() + " / " + Stri(cards.Count() - 2).Trim()
+        vid = (m.coll <> "recipes")
+        m.pSub.visible = (vid and m.rFCard = 0)
+        m.pMid.visible = (vid and m.rFCard = 0)
+        m.pFootL.visible = vid
+        m.pFootR.visible = vid
+        if vid then
+            m.pFootL.text = collWord() + " " + counter(m.pos.recipes, recList().Count())
+            m.pFootR.text = getText(r, "length")
+            if m.rFCard = 0 then
+                m.pNav.text = "Overview   ·   " + getText(r, "category")
+                if getText(r, "filmedBy") <> "" then m.pSub.text = byWord() + " " + getText(r, "filmedBy") else m.pSub.text = ""
+                md = getText(r, "season")
+                if md <> "" and getText(r, "date") <> "" then md = md + "   ·   "
+                m.pMid.text = md + getText(r, "date")
+                m.pBody.text = ""
+            end if
+        end if
+        m.pCredit.text = getText(r, "credit")
+        hasQr = (getText(r, "qr") <> "")
+        m.pQrLabel.visible = hasQr
+        m.pQrBg.visible = hasQr
+        m.pQr.visible = hasQr
+        m.pQr.uri = getText(r, "qr")
+        m.pQrLabel.text = getText(r, "qrLabel")
+        if m.pQrLabel.text = "" then m.pQrLabel.text = "Full recipe"
+    end if
+    if m.fullBadge = invalid then
+        m.fullBadge = m.top.createChild("Poster")
+        m.fullBadge.uri = "pkg:/images/mychannel/play_badge.png"
+        m.fullBadge.width = 200
+        m.fullBadge.height = 200
+        m.fullBadge.translation = [860, 440]
+    end if
+    isVid = (getText(r, "video") <> "")
+    m.fullBadge.visible = isVid
+    if m.rPanel then m.fullBadge.translation = [860, 235] else m.fullBadge.translation = [860, 440]
+    cnt = collWord() + " " + counter(m.pos.recipes, recList().Count()) + "    ·    "
+    if m.coll <> "recipes" and m.rPanel then cnt = ""
+    if m.pShowOn = true then
+        m.rHint.text = cnt + "Slideshow playing    Play: Stop    Back: Close"
+    else if m.fPop then
+        m.rHint.text = cnt + "Up/Down: Choose    OK: Select    Back: Close list"
+    else if m.fFoc = "cat" then
+        m.rHint.text = cnt + "OK: Choose a category    Down: Back to " + stepName()
+    else if m.rPanel and isVid then
+        m.rHint.text = cnt + "Play: Watch video    Up: Categories    Down: Hide " + infoWord() + "    Right: " + stepWord() + "    Back: Close"
+    else if m.rPanel then
+        m.rHint.text = cnt + "Up: Categories    Down: Hide " + infoWord() + "    Right: " + stepWord() + "    Back: Close"
+    else if isVid then
+        m.rHint.text = cnt + "Play: Watch video    Up: Show " + infoWord() + "    Right: Next " + LCase(collWord()) + "    Back: Close"
+    else
+        m.rHint.text = cnt + "Up: Show " + infoWord() + "    Right: Next " + LCase(collWord()) + "    Back: Close"
+    end if
+    if m.coll = "photos" and m.pShowOn <> true and not m.fPop and m.fFoc <> "cat" then m.rHint.text = cnt + "Play: Slideshow    " + Mid(m.rHint.text, Len(cnt) + 1)
+    if m.emptyMsg <> invalid and m.emptyMsg <> "" then
+        m.rHint.text = m.emptyMsg
+        m.emptyMsg = ""
+    end if
+    m.rFullTitleBg.visible = true
+    m.rFullTitle.visible = true
+    m.fTopG.visible = true
+    m.rHintBg.visible = true
+    m.rHint.visible = true
+end sub
+
+sub closeRecipeFull()
+    stopPhotoShow()
+    m.rFull = false
+    m.rPanel = false
+    m.fPop = false
+    m.fFoc = "photo"
+    m.fullBg.visible = false
+    m.fullPhoto.visible = false
+    for each nd in [m.rFullTitle, m.rFullTitleBg, m.fullBadge, m.rHint, m.rHintBg, m.fTopG, m.rPanelG, m.fPopG]
+        if nd <> invalid then nd.visible = false
+    end for
+end sub
+
+sub nextSong()
+    n = m.ch.music.Count()
+    if m.mode = "one" then
+        ' same song again
+    else if m.mode = "shuffle" and n > 1 then
+        r = m.pos.music
+        while r = m.pos.music
+            r = Rnd(n) - 1
+        end while
+        m.pos.music = r
+    else
+        if m.pos.music + 1 < n then m.pos.music = m.pos.music + 1 else m.pos.music = 0
+    end if
+    playSong()
+end sub
+
+function modeName() as String
+    if m.mode = "one" then return "Repeat song"
+    if m.mode = "shuffle" then return "Shuffle"
+    return "Play all"
+end function
+
+sub onAudioState()
+    if m.audio.state = "finished" then
+        nextSong()
+    end if
+    if m.kind = "music" and m.channel.visible then showSection()
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+
+    if m.rOn and m.kind <> "recipes" and m.kind <> "videos" and m.kind <> "photos" then m.rOn = false
+    if m.kind = "family" and m.channel.visible and not m.video.visible and not m.rFull then
+        if famKey(key, press) then return true
+    end if
+    if m.rFull then
+        if press then
+            if m.coll = "photos" and key = "play" then
+                togglePhotoShow()
+                return true
+            end if
+            if m.pShowOn = true then stopPhotoShow()
+            n = recList().Count()
+            if m.fPop then
+                cc = recCats().Count()
+                if key = "up" then
+                    if m.rPi > 0 then m.rPi = m.rPi - 1
+                else if key = "down" then
+                    if m.rPi + 1 < cc then m.rPi = m.rPi + 1
+                else if key = "OK" then
+                    oldCat = m.rCat
+                    m.rCat = m.rPi
+                    if recList().Count() = 0 then
+                        m.rCat = oldCat
+                        m.emptyMsg = "Nothing in " + recCats()[m.rPi] + " yet    ·    Up/Down: Choose another    Back: Close list"
+                    else
+                        m.pos.recipes = 0
+                        m.rFCard = 0
+                        m.fPop = false
+                        m.fFoc = "photo"
+                    end if
+                else if key = "back" then
+                    m.fPop = false
+                end if
+                showRecipeFull()
+                drawRecipe()
+                return true
+            end if
+            if m.fFoc = "cat" then
+                if key = "OK" then
+                    m.fPop = true
+                    m.rPi = m.rCat
+                else if key = "down" or key = "back" then
+                    m.fFoc = "photo"
+                end if
+                showRecipeFull()
+                return true
+            end if
+            if key = "left" or key = "right" then
+                r0 = curRecipe()
+                if m.rPanel and r0 <> invalid then
+                    total = recipeCards(r0).Count()
+                    if key = "right" then
+                        if m.rFCard + 1 < total then
+                            m.rFCard = m.rFCard + 1
+                        else if m.pos.recipes + 1 < n then
+                            m.pos.recipes = m.pos.recipes + 1
+                            m.rFCard = 0
+                        end if
+                    else if m.rFCard > 0 then
+                        m.rFCard = m.rFCard - 1
+                    end if
+                else
+                    if key = "left" and m.pos.recipes > 0 then m.pos.recipes = m.pos.recipes - 1
+                    if key = "right" and m.pos.recipes + 1 < n then m.pos.recipes = m.pos.recipes + 1
+                    m.rFCard = 0
+                end if
+                m.rCard = -1
+                showRecipeFull()
+                drawRecipe()
+                return true
+            end if
+            if key = "up" then
+                if m.rPanel then m.fFoc = "cat" else m.rPanel = true
+                showRecipeFull()
+                return true
+            end if
+            if key = "down" then
+                m.rPanel = false
+                showRecipeFull()
+                return true
+            end if
+            if key = "OK" or key = "play" then
+                if m.rFullClock <> invalid and m.rFullClock.TotalMilliseconds() < 500 then return true
+                r = curRecipe()
+                if r <> invalid and getText(r, "video") <> "" then
+                    m.rVidBack = true
+                    m.rVidCard = m.rFCard
+                    m.rVidPanel = m.rPanel
+                    closeRecipeFull()
+                    startRecipeVideo(r)
+                end if
+                return true
+            end if
+            if key = "back" then
+                closeRecipeFull()
+                if m.rOn or (m.kind = "family" and m.fmOn) then m.keys.setFocus(true) else m.menu.setFocus(true)
+                drawRecipe()
+                if m.kind = "family" then drawFamily()
+                return true
+            end if
+        end if
+        return true
+    end if
+    if m.rOn and m.video.visible then
+        if not press then return true
+        if m.side = true then
+            if key = "back" or key = "up" or key = "options" then
+                sideOff()
+                m.video.setFocus(true)
+            else if key = "right" then
+                if m.sCard < m.sMax then
+                    m.sCard = m.sCard + 1
+                    drawSide()
+                end if
+            else if key = "left" then
+                if m.sCard > 0 then
+                    m.sCard = m.sCard - 1
+                    drawSide()
+                end if
+            else if key = "OK" or key = "play" then
+                if m.video.state = "paused" then m.video.control = "resume" else m.video.control = "pause"
+            end if
+        else if key = "back" then
+            closeVideo()
+        else if (key = "down" or key = "options") and m.coll = "videos" then
+            sideOn()
+        end if
+        return true
+    end if
+    if press and m.rOn then
+        n = recList().Count()
+        if m.rPop then
+            cc = recCats().Count()
+            if key = "up" then
+                if m.rPi > 0 then m.rPi = m.rPi - 1
+            else if key = "down" then
+                if m.rPi + 1 < cc then m.rPi = m.rPi + 1
+            else if key = "OK" then
+                m.rCat = m.rPi
+                m.pos.recipes = 0
+                m.rPop = false
+                m.rFoc = "row"
+            else if key = "back" then
+                m.rPop = false
+            end if
+        else if m.rCard < 0 and m.rFoc = "cat" then
+            if key = "OK" then
+                m.rPop = true
+                m.rPi = m.rCat
+            else if key = "down" then
+                m.rFoc = "row"
+            else if key = "back" then
+                exitRecipes()
+            end if
+        else if m.rCard < 0 then
+            if key = "left" then
+                if m.pos.recipes > 0 then m.pos.recipes = m.pos.recipes - 1 else exitRecipes()
+            else if key = "right" then
+                if m.pos.recipes + 1 < n then m.pos.recipes = m.pos.recipes + 1
+            else if key = "up" then
+                m.rFoc = "cat"
+            else if key = "OK" or key = "play" then
+                playRecipeVideo()
+            else if key = "back" then
+                exitRecipes()
+            end if
+        else
+            total = recipeCards(curRecipe()).Count()
+            if key = "left" then
+                if m.rCard > 0 then m.rCard = m.rCard - 1
+            else if key = "right" then
+                if m.rCard + 1 < total then
+                    m.rCard = m.rCard + 1
+                else if m.pos.recipes + 1 < n then
+                    m.pos.recipes = m.pos.recipes + 1
+                    m.rCard = 0
+                end if
+            else if key = "back" then
+                m.rCard = -1
+            else if key = "OK" or key = "play" then
+                playRecipeVideo()
+            end if
+        end if
+        if m.rOn and not m.video.visible then drawRecipe()
+        return true
+    end if
+    if press and m.channel.visible and not m.video.visible and (m.kind = "recipes" or m.kind = "videos" or m.kind = "photos") then
+        if key = "right" and recList().Count() > 0 then
+            setColl(m.kind)
+            m.rOn = true
+            m.rCard = -1
+            m.rFoc = "row"
+            m.keys.setFocus(true)
+            drawRecipe()
+            return true
+        else if key = "left" then
+            return true
+        end if
+    end if
+
+    if press and m.full then
+        if key = "back" or key = "OK" then
+            exitFull()
+        else if key = "play" then
+            toggleSlide()
+        else if key = "left" or key = "right" then
+            stopSlide()
+            if key = "left" then browse(-1) else browse(1)
+            m.fullPhoto.uri = fullUri()
+        end if
+        return true
+    end if
+    if press and m.channel.visible and m.kind = "links" and m.ch[m.kind].Count() > 0 then
+        if key = "play" then
+            toggleSlide()
+            return true
+        else if key = "left" or key = "right" then
+            if m.slide then stopSlide()
+        end if
+    end if
+
+    if press and m.panelOn then
+        if key = "left" then
+            if m.pf > 0 then m.pf = m.pf - 1 else exitPanel()
+        else if key = "right" then
+            if m.pf < 4 then m.pf = m.pf + 1
+        else if key = "OK" then
+            pressPanel(m.pf)
+        else if key = "back" then
+            exitPanel()
+        else if key = "play" then
+            toggleMusic()
+        else if key = "replay" then
+            pressPanel(0)
+        else if key = "rewind" then
+            pressPanel(2)
+        else if key = "fastforward" then
+            pressPanel(4)
+        end if
+        if m.panelOn then updatePanel()
+        return true
+    end if
+    if press and m.channel.visible and not m.video.visible and m.kind = "music" and key = "right" and m.ch.music.Count() > 0 then
+        enterPanel()
+        return true
+    end if
+
+    if press and m.channel.visible and m.kind = "music" and m.ch.music.Count() > 0 then
+        if key = "play" then
+            toggleMusic()
+            return true
+        else if key = "replay" then
+            if m.mode = invalid or m.mode = "all" then
+                m.mode = "one"
+            else if m.mode = "one" then
+                m.mode = "shuffle"
+            else
+                m.mode = "all"
+            end if
+            showSection()
+            return true
+        end if
+    end if
+    if not press then return false
+    if m.video.visible then
+        if key = "back" then closeVideo()
+        return true
+    end if
+    if m.channel.visible then
+        if key = "back" then
+            closeChannel()
+        else if key = "left" then
+            browse(-1)
+        else if key = "right" then
+            browse(1)
+        else if key = "OK" then
+            onMenuSelect()
+        end if
+        return true
+    end if
+    if key = "OK" then
+        i = m.grid.itemFocused
+        if m.apps[i][1] = "mychannel" then
+            openChannel()
+            return true
+        end if
+        print "OPENING: " + m.apps[i][0]
+        m.launcher.appId = m.apps[i][1]
+        m.launcher.control = "STOP"
+        m.launcher.control = "RUN"
+        return true
+    end if
+    return false
+end function
+]]></script>
+<children>
+    <Poster uri="pkg:/images/bg.jpg" width="1920" height="1080" />
+    <Label id="title" text="My Apps" translation="[120,90]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+    <MarkupGrid id="grid" translation="[120,240]" itemComponentName="AppTile"
+        numColumns="4" numRows="2" itemSize="[400,300]" itemSpacing="[30,30]"
+        vertFocusAnimationStyle="floatingFocus" />
+
+    <!-- My Channel. Content comes from mychannel.json; see docs/my-channel.md -->
+    <Group id="channel" visible="false">
+        <Rectangle width="1920" height="1080" color="0x000000C0" />
+        <Poster uri="pkg:/images/family_logo.png" translation="[120,50]" width="160" height="120" loadDisplayMode="scaleToFit" />
+        <Label id="chName" translation="[120,185]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+        <Label id="chTagline" translation="[600,185]" width="1200" font="font:SmallSystemFont" color="0x9FC6F0FF" />
+        <LabelList id="menu" translation="[120,290]" itemSize="[420,72]" itemSpacing="[0,12]" vertFocusAnimationStyle="floatingFocus" />
+        <Rectangle translation="[600,240]" width="1200" height="720" color="0x00000066" />
+
+        <Group id="aboutView">
+            <Poster id="aboutPhoto" translation="[650,290]" width="360" height="360" loadDisplayMode="scaleToFit" />
+            <Label id="aboutName" translation="[1060,290]" width="690" wrap="true" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+            <Label id="aboutBio" translation="[1060,390]" width="690" height="230" wrap="true" font="font:MediumSystemFont" color="0xFFFFFFFF" />
+            <Rectangle translation="[1060,650]" width="200" height="200" color="0xFFFFFFFF" />
+            <Poster uri="pkg:/images/mychannel/qr_about_web.png" translation="[1070,660]" width="180" height="180" />
+            <Label text="Website" translation="[1060,862]" width="200" horizAlign="center" font="font:SmallSystemFont" color="0xFFFFFFFF" />
+            <Rectangle translation="[1305,650]" width="200" height="200" color="0xFFFFFFFF" />
+            <Poster uri="pkg:/images/mychannel/qr_about_github.png" translation="[1315,660]" width="180" height="180" />
+            <Label text="GitHub" translation="[1305,862]" width="200" horizAlign="center" font="font:SmallSystemFont" color="0xFFFFFFFF" />
+            <Rectangle translation="[1550,650]" width="200" height="200" color="0xFFFFFFFF" />
+            <Poster uri="pkg:/images/mychannel/qr_about_coffee.png" translation="[1560,660]" width="180" height="180" />
+            <Label text="Buy Me a Coffee" translation="[1500,864]" width="300" horizAlign="center" font="font:SmallestBoldSystemFont" color="0xFFDD00FF" />
+            <Label text="Unofficial project. Not affiliated with Roku, Inc." translation="[0,1035]" width="1920" horizAlign="center" font="font:SmallestSystemFont" color="0x9FC6F0FF" />
+        </Group>
+
+        <Group id="photosView" visible="false">
+            <Poster id="photo" translation="[660,270]" width="1080" height="608" loadDisplayMode="scaleToFit" />
+            <Label id="caption" translation="[660,895]" width="1080" horizAlign="center" font="font:SmallSystemFont" color="0xFFFFFFFF" />
+            <Label id="photoCount" translation="[1540,895]" width="200" horizAlign="right" font="font:SmallSystemFont" color="0x9FC6F0FF" />
+        </Group>
+
+        <Group id="linksView" visible="false">
+            <Rectangle translation="[660,300]" width="440" height="440" color="0xFFFFFFFF" />
+            <Poster id="qr" translation="[670,310]" width="420" height="420" loadDisplayMode="scaleToFit" />
+            <Label id="qrMissing" translation="[690,330]" width="380" height="380" wrap="true" horizAlign="center" vertAlign="center" font="font:SmallSystemFont" color="0x0B1B33FF" text="QR code not made yet. Run scripts/make_qr.py, then rebuild the zip." />
+            <Label id="linkLabel" translation="[1160,320]" width="600" wrap="true" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+            <Label id="linkUrl" translation="[1160,460]" width="600" wrap="true" font="font:SmallSystemFont" color="0x9FC6F0FF" />
+            <Label id="linkCount" translation="[1160,700]" width="600" font="font:SmallSystemFont" color="0x9FC6F0FF" />
+        </Group>
+
+        <Group id="videosView" visible="false">
+            <Rectangle translation="[660,270]" width="1080" height="450" color="0x000000FF" />
+            <Poster id="videoThumb" translation="[660,270]" width="1080" height="450" loadDisplayMode="scaleToZoom" />
+            <Rectangle translation="[660,620]" width="1080" height="100" color="0x000000B0" />
+            <Label id="videoTitle" translation="[690,620]" width="1020" height="100" vertAlign="center" font="font:MediumBoldSystemFont" color="0xFFFFFFFF" />
+            <Rectangle id="cardFocus" translation="[655,735]" width="210" height="122" color="0xFFFFFFFF" />
+            <Rectangle translation="[660,740]" width="200" height="112" color="0x000000FF" />
+            <Poster id="card0" translation="[660,740]" width="200" height="112" loadDisplayMode="scaleToZoom" />
+            <Rectangle translation="[880,740]" width="200" height="112" color="0x000000FF" />
+            <Poster id="card1" translation="[880,740]" width="200" height="112" loadDisplayMode="scaleToZoom" />
+            <Rectangle translation="[1100,740]" width="200" height="112" color="0x000000FF" />
+            <Poster id="card2" translation="[1100,740]" width="200" height="112" loadDisplayMode="scaleToZoom" />
+            <Rectangle translation="[1320,740]" width="200" height="112" color="0x000000FF" />
+            <Poster id="card3" translation="[1320,740]" width="200" height="112" loadDisplayMode="scaleToZoom" />
+            <Rectangle translation="[1540,740]" width="200" height="112" color="0x000000FF" />
+            <Poster id="card4" translation="[1540,740]" width="200" height="112" loadDisplayMode="scaleToZoom" />
+            <Label id="videoInfo" translation="[660,895]" width="860" wrap="true" font="font:SmallSystemFont" color="0xFFFFFFFF" />
+            <Label id="videoCount" translation="[1540,895]" width="200" horizAlign="right" font="font:SmallSystemFont" color="0x9FC6F0FF" />
+        </Group>
+
+        <Group id="musicView" visible="false">
+            <Poster id="record" uri="pkg:/images/mychannel/record_1.png" translation="[830,130]" width="500" height="500" scaleRotateCenter="[250,250]" />
+            <Animation id="spin" duration="3" repeat="true" easeFunction="linear">
+                <FloatFieldInterpolator key="[0.0, 1.0]" keyValue="[0.0, -6.2832]" fieldToInterp="record.rotation" />
+            </Animation>
+            <Label id="musicTitle" translation="[540,665]" width="1080" horizAlign="center" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+            <Poster id="panel" uri="pkg:/images/mychannel/panel_1.png" translation="[1655,620]" width="225" height="405" />
+            <Poster id="pfRing" uri="pkg:/images/mychannel/ring.png" translation="[1787,830]" width="45" height="45" visible="false" />
+            <Poster id="modeIcon" uri="pkg:/images/mychannel/replay_icon.png" translation="[1740,920]" width="30" height="30" />
+            <Label id="modeLabel" translation="[1112,928]" font="font:SmallSystemFont" color="0xFFFFFFFF" />
+            <Label id="musicInfo" translation="[540,745]" width="1080" horizAlign="center" font="font:SmallSystemFont" color="0x9FC6F0FF" />
+        </Group>
+
+        <Label id="hint" translation="[120,990]" width="1680" font="font:SmallSystemFont" color="0xCCCCCCFF" />
+        <Video id="video" visible="false" width="1920" height="1080" />
+    </Group>
+</children>
+</component>

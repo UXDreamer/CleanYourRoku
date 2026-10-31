@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Launcher" extends="Task">
+<interface><field id="appId" type="string" /></interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.functionName = "go"
+end sub
+sub go()
+    print "TASK RUNNING - APP MANAGER"
+    am = CreateObject("roAppManager")
+    print "APP MANAGER: " + type(am)
+    result = am.LaunchApp(m.top.appId, "", {})
+    print "LAUNCH RESULT: " + type(result)
+end sub
+]]></script>
+</component>

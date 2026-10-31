@@ -1,0 +1,936 @@
+{
+  "name": "My Album",
+  "tagline": "",
+  "tile_image": "pkg:/images/app_family_s.jpg",
+  "about": {
+    "name": "Damien Pressley",
+    "photo": "pkg:/images/mychannel/about.jpg",
+    "bio": "ASU Human Systems Engineering grad student. I built CleanYourRoku to help people take back control of their TV."
+  },
+  "photos": [
+    {
+      "title": "Isabella Rides Solo",
+      "still": true,
+      "category": "Family",
+      "season": "Spring",
+      "date": "April 12, 2026",
+      "filmedBy": "Angela",
+      "who": "Steven and Isabella.",
+      "where": "Willow Creek Park.",
+      "people": [
+        "Steven",
+        "Isabella",
+        "Angela"
+      ],
+      "image": "pkg:/images/mychannel/still_1.jpg",
+      "thumb": "pkg:/images/mychannel/still_1.jpg",
+      "caption": "Isabella Rides Solo"
+    },
+    {
+      "title": "Up on the Swings",
+      "still": true,
+      "category": "Birthdays",
+      "season": "Summer",
+      "date": "July 18, 2026",
+      "filmedBy": "Linda",
+      "who": "Susan, Maya and Chloe.",
+      "where": "The county fair.",
+      "people": [
+        "Susan",
+        "Linda"
+      ],
+      "image": "pkg:/images/mychannel/still_2.jpg",
+      "thumb": "pkg:/images/mychannel/still_2.jpg",
+      "caption": "Up on the Swings"
+    },
+    {
+      "title": "Cable Cars in the Snow",
+      "still": true,
+      "category": "Holidays",
+      "season": "Winter",
+      "date": "December 27, 2025",
+      "filmedBy": "Robert",
+      "who": "All of us, up in the cable cars.",
+      "where": "Silver Peak.",
+      "people": [
+        "Robert",
+        "Steven",
+        "Angela",
+        "Isabella"
+      ],
+      "image": "pkg:/images/mychannel/still_3.jpg",
+      "thumb": "pkg:/images/mychannel/still_3.jpg",
+      "caption": "Cable Cars in the Snow"
+    },
+    {
+      "title": "Duke and Peanut",
+      "still": true,
+      "category": "Pets",
+      "season": "Fall",
+      "date": "October 18, 2025",
+      "filmedBy": "Dana",
+      "who": "Jake and Mary, with Duke and Peanut.",
+      "where": "MacArthur Park.",
+      "people": [
+        "Jake",
+        "Mary",
+        "Dana"
+      ],
+      "image": "pkg:/images/mychannel/still_4.jpg",
+      "thumb": "pkg:/images/mychannel/still_4.jpg",
+      "caption": "Duke and Peanut"
+    },
+    {
+      "title": "Tyler on Stage",
+      "still": true,
+      "category": "Proud Moments",
+      "season": "Summer",
+      "date": "June 7, 2026",
+      "filmedBy": "Denise",
+      "who": "Tyler and The Backyard Echoes.",
+      "where": "The Rusty Anchor.",
+      "people": [
+        "Tyler",
+        "Denise"
+      ],
+      "image": "pkg:/images/mychannel/still_5.jpg",
+      "thumb": "pkg:/images/mychannel/still_5.jpg",
+      "caption": "Tyler on Stage"
+    }
+  ],
+  "links": [
+    {
+      "id": "handshake",
+      "label": "Handshake",
+      "link": "https://app.joinhandshake.com/profiles/uxdreamer"
+    },
+    {
+      "id": "github",
+      "label": "CleanYourRoku on GitHub",
+      "link": "https://github.com/dlpressl/CleanYourRoku"
+    },
+    {
+      "id": "linkedin",
+      "label": "LinkedIn",
+      "link": "https://www.linkedin.com/in/damienpressley"
+    },
+    {
+      "id": "wifi",
+      "label": "Guest Wi-Fi (example)",
+      "link": "WIFI:T:WPA;S:YOUR_GUEST_NETWORK;P:${GUEST_WIFI_PASSWORD};;"
+    }
+  ],
+  "videos": [
+    {
+      "title": "Bike Ride with Dad",
+      "length": "0:58",
+      "category": "Family",
+      "date": "April 12, 2026",
+      "filmedBy": "Angela",
+      "who": "Steven and Isabella.",
+      "what": "Isabella's first ride without training wheels.",
+      "where": "Willow Creek Park.",
+      "favorite": "The whole ride.",
+      "credit": "",
+      "thumb": "http://YOUR_JELLYFIN_IP:8096/Items/0455d77c001b4248c03ce706d55f0eb9/Images/Primary?maxWidth=1920&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Videos/0455d77c001b4248c03ce706d55f0eb9/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "video": "http://YOUR_JELLYFIN_IP:8096/Videos/0455d77c001b4248c03ce706d55f0eb9/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "season": "Spring",
+      "people": [
+        "Steven",
+        "Isabella",
+        "Angela"
+      ]
+    },
+    {
+      "title": "Susan's Birthday at the Fair",
+      "length": "0:30",
+      "category": "Birthdays",
+      "date": "July 18, 2026",
+      "filmedBy": "Linda",
+      "who": "Susan, Maya and Chloe.",
+      "what": "Susan's birthday at the fair. The swings were the first ride she wanted.",
+      "where": "The county fair.",
+      "favorite": "Susan up high on the swings.",
+      "credit": "",
+      "thumb": "http://YOUR_JELLYFIN_IP:8096/Items/f31432e56d3a700992b24269b0d3adcc/Images/Primary?maxWidth=1920&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Videos/f31432e56d3a700992b24269b0d3adcc/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "video": "http://YOUR_JELLYFIN_IP:8096/Videos/f31432e56d3a700992b24269b0d3adcc/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "season": "Summer",
+      "people": [
+        "Susan",
+        "Linda"
+      ]
+    },
+    {
+      "title": "Winter Holiday in the Mountains",
+      "length": "0:49",
+      "category": "Holidays",
+      "date": "December 27, 2025",
+      "filmedBy": "Robert",
+      "who": "All of us, up in the cable cars.",
+      "what": "Our winter trip to the mountains.",
+      "where": "Silver Peak.",
+      "favorite": "All that snow on the trees below us.",
+      "credit": "",
+      "thumb": "http://YOUR_JELLYFIN_IP:8096/Items/1792ac8d00c11e045825f542423e2c3d/Images/Primary?maxWidth=1920&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Videos/1792ac8d00c11e045825f542423e2c3d/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "video": "http://YOUR_JELLYFIN_IP:8096/Videos/1792ac8d00c11e045825f542423e2c3d/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "season": "Winter",
+      "people": [
+        "Robert",
+        "Steven",
+        "Angela",
+        "Isabella"
+      ]
+    },
+    {
+      "title": "The New Pup's First Walk",
+      "length": "0:10",
+      "category": "Pets",
+      "date": "October 18, 2025",
+      "filmedBy": "Dana",
+      "who": "Jake and Mary, with Duke and Peanut.",
+      "what": "The day Peanut came home, and her first walk with Duke.",
+      "where": "MacArthur Park.",
+      "favorite": "Duke and Peanut side by side.",
+      "credit": "",
+      "thumb": "http://YOUR_JELLYFIN_IP:8096/Items/32fe04bef3b074fd66004b045ab60f14/Images/Primary?maxWidth=1920&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Videos/32fe04bef3b074fd66004b045ab60f14/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "video": "http://YOUR_JELLYFIN_IP:8096/Videos/32fe04bef3b074fd66004b045ab60f14/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "season": "Fall",
+      "people": [
+        "Jake",
+        "Mary",
+        "Dana"
+      ]
+    },
+    {
+      "title": "Tyler's First Gig",
+      "length": "0:12",
+      "category": "Proud Moments",
+      "date": "June 7, 2026",
+      "filmedBy": "Denise",
+      "who": "Tyler and The Backyard Echoes.",
+      "what": "The band's first show ever.",
+      "where": "The Rusty Anchor.",
+      "favorite": "Tyler going all out on the guitar.",
+      "credit": "",
+      "thumb": "http://YOUR_JELLYFIN_IP:8096/Items/c3c28fadce3adc773ee49550b8d85e63/Images/Primary?maxWidth=1920&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Videos/c3c28fadce3adc773ee49550b8d85e63/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "video": "http://YOUR_JELLYFIN_IP:8096/Videos/c3c28fadce3adc773ee49550b8d85e63/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "season": "Summer",
+      "people": [
+        "Tyler",
+        "Denise"
+      ]
+    }
+  ],
+  "music": [
+    {
+      "title": "Downtown",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Audio/d55e6576bcda921f43df3a50ec66d46d/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "artist": "Alex MakeMusic",
+      "record": "pkg:/images/mychannel/record_1.png",
+      "length": "1:39",
+      "color": "0x4DA3FFFF",
+      "people": [
+        "Josephine",
+        "Robert"
+      ]
+    },
+    {
+      "title": "Motivation",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Audio/c1f37c51e91ca95c4fc617a223292800/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "artist": "Atlas Audio",
+      "record": "pkg:/images/mychannel/record_2.png",
+      "length": "1:26",
+      "color": "0xE64848FF",
+      "people": [
+        "Tyler",
+        "Mary"
+      ]
+    },
+    {
+      "title": "Motivation II",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Audio/16f4ce3b20b4e403a08a6d99d4d976e1/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "artist": "Atlas Audio",
+      "record": "pkg:/images/mychannel/record_3.png",
+      "length": "2:16",
+      "color": "0xF0BE3CFF",
+      "people": [
+        "Angela",
+        "Isabella"
+      ]
+    },
+    {
+      "title": "Motivation",
+      "url": "http://YOUR_JELLYFIN_IP:8096/Audio/28fa7d627498b27b69ab9e8981bf9d93/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "artist": "Paul Yudin",
+      "record": "pkg:/images/mychannel/record_4.png",
+      "length": "1:15",
+      "color": "0x50BE78FF",
+      "people": [
+        "Steven",
+        "Jake"
+      ]
+    }
+  ],
+  "recipes": [
+    {
+      "title": "JB's Crepes",
+      "short": "Crepes",
+      "category": "Breakfast",
+      "yield": "Makes 15 crepes",
+      "prep": "10 min + 1 hr rest",
+      "cook": "25 min",
+      "credit": "RecipeTin Eats  \u00b7  Photo: Midjourney",
+      "source": "https://www.recipetineats.com/crepes/",
+      "qr": "pkg:/images/mychannel/qr_recipe_2.png",
+      "qrLabel": "Full recipe",
+      "thumb": "pkg:/images/mychannel/recipe_crepes.jpg",
+      "video": "",
+      "ingredients": [
+        {
+          "group": "Batter",
+          "items": [
+            "1 2/3 cups plain flour, sifted",
+            "3 tbsp caster sugar",
+            "1/4 tsp salt",
+            "3 large eggs",
+            "2 cups full-fat milk",
+            "1/3 cup water",
+            "2 tbsp neutral oil"
+          ]
+        },
+        {
+          "group": "For the pan",
+          "items": [
+            "3 tbsp unsalted butter, cubed"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "title": "Mix the dry ingredients",
+          "lines": [
+            "Sift the flour into a large bowl.",
+            "Whisk in the sugar and salt."
+          ]
+        },
+        {
+          "title": "Add the eggs",
+          "lines": [
+            "Make a well in the middle.",
+            "Crack in the eggs.",
+            "Stir in just enough flour to make a thick paste."
+          ]
+        },
+        {
+          "title": "Whisk in the liquids",
+          "lines": [
+            "Slowly whisk in the milk until smooth.",
+            "Add the water and oil.",
+            "Whisk until glossy and pourable."
+          ]
+        },
+        {
+          "title": "Rest the batter",
+          "lines": [
+            "Cover the bowl.",
+            "Leave it at room temperature for about 1 hour."
+          ]
+        },
+        {
+          "title": "Heat the pan",
+          "lines": [
+            "Use a non-stick pan over medium-high heat.",
+            "Turn it to medium if your stove runs hot."
+          ]
+        },
+        {
+          "title": "Grease it lightly",
+          "lines": [
+            "Melt a little butter in the pan.",
+            "Wipe most of it out, leaving a thin film."
+          ]
+        },
+        {
+          "title": "Pour and swirl",
+          "lines": [
+            "Lift the pan off the heat.",
+            "Pour in about 1/4 cup of batter.",
+            "Swirl fast to coat the bottom thinly."
+          ]
+        },
+        {
+          "title": "Cook and flip",
+          "lines": [
+            "Cook 45 seconds to 1 minute until golden underneath.",
+            "Flip it.",
+            "Cook the other side about 30 seconds."
+          ]
+        },
+        {
+          "title": "Stack and serve",
+          "lines": [
+            "Slide it onto a plate.",
+            "Add a little butter and repeat.",
+            "Serve with your favorite toppings."
+          ]
+        }
+      ],
+      "description": "Thin, buttery French-style pancakes. Make the batter ahead, then cook them one by one and stack them up with your favorite toppings."
+    },
+    {
+      "title": "Family Mac and Cheese",
+      "short": "Mac and Cheese",
+      "category": "Lunch",
+      "yield": "Serves 6",
+      "prep": "15 min",
+      "cook": "30 min",
+      "credit": "Family recipe (sample)  \u00b7  Photo: Midjourney",
+      "source": "",
+      "qr": "",
+      "qrLabel": "",
+      "thumb": "pkg:/images/mychannel/recipe_mac.jpg",
+      "video": "",
+      "ingredients": [
+        {
+          "group": "Pasta and sauce",
+          "items": [
+            "1 lb elbow macaroni",
+            "4 tbsp butter",
+            "1/4 cup flour",
+            "3 cups whole milk",
+            "1 tsp salt",
+            "1/2 tsp black pepper",
+            "1/2 tsp mustard powder"
+          ]
+        },
+        {
+          "group": "Cheese and topping",
+          "items": [
+            "3 cups sharp cheddar, shredded (divided)",
+            "1 cup mozzarella, shredded",
+            "1/2 cup breadcrumbs",
+            "1 tbsp melted butter"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "title": "Get ready",
+          "lines": [
+            "Heat the oven to 375 F.",
+            "Butter a 9 x 13 baking dish."
+          ]
+        },
+        {
+          "title": "Cook the pasta",
+          "lines": [
+            "Boil the macaroni 1 minute less than the package says.",
+            "Drain it."
+          ]
+        },
+        {
+          "title": "Start the sauce",
+          "lines": [
+            "Melt the butter in a large pot.",
+            "Whisk in the flour.",
+            "Stir for 1 minute."
+          ]
+        },
+        {
+          "title": "Add the milk",
+          "lines": [
+            "Slowly whisk in the milk.",
+            "Simmer about 5 minutes until thick."
+          ]
+        },
+        {
+          "title": "Melt in the cheese",
+          "lines": [
+            "Take the pot off the heat.",
+            "Stir in the salt, pepper and mustard.",
+            "Stir in 2 cups of cheddar and the mozzarella until smooth."
+          ]
+        },
+        {
+          "title": "Fill the dish",
+          "lines": [
+            "Fold in the pasta and pour it into the dish.",
+            "Top with the rest of the cheddar.",
+            "Toss the breadcrumbs with melted butter and sprinkle on top."
+          ]
+        },
+        {
+          "title": "Bake",
+          "lines": [
+            "Bake 25 to 30 minutes until bubbly and golden.",
+            "Rest 5 minutes before serving."
+          ]
+        }
+      ],
+      "description": "A creamy, baked family classic made with sharp cheddar and mozzarella, folded into tender macaroni and finished with a crunchy golden breadcrumb top. This is a sample family recipe, so swap in one of your own and make it yours.",
+      "people": [
+        "Josephine"
+      ]
+    },
+    {
+      "title": "Beef Rice Noodles",
+      "short": "Beef Rice Noodles",
+      "category": "Lunch",
+      "yield": "Serves 2-3",
+      "prep": "10 min + 20 min to tenderize",
+      "cook": "10 min",
+      "credit": "RecipeTin Eats  \u00b7  Photo: Midjourney",
+      "source": "https://www.recipetineats.com/beef-rice-noodles/",
+      "qr": "pkg:/images/mychannel/qr_recipe_3.png",
+      "qrLabel": "Full recipe",
+      "video": "",
+      "thumb": "pkg:/images/mychannel/recipe_noodles.jpg",
+      "description": "A quick beef and rice noodle stir-fry in a savory, garlicky soy sauce. Tenderizing the beef first keeps it juicy.",
+      "ingredients": [
+        {
+          "group": "Tenderized beef",
+          "items": [
+            "200 g (7 oz) rump or top sirloin, thinly sliced",
+            "1/2 tsp baking soda (not baking powder)",
+            "2 tsp light soy sauce"
+          ]
+        },
+        {
+          "group": "Stir fry",
+          "items": [
+            "2 tbsp peanut or neutral oil",
+            "200 g (7 oz) flat rice noodles",
+            "3 garlic cloves, minced",
+            "1/2 onion, sliced",
+            "6-8 baby bok choy, stems and leaves separated"
+          ]
+        },
+        {
+          "group": "Sauce",
+          "items": [
+            "1 tbsp light soy sauce",
+            "1 1/2 tbsp dark soy sauce",
+            "3 tbsp oyster sauce",
+            "2 tsp white sugar",
+            "1 tbsp water",
+            "Pinch of white pepper"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "title": "Tenderize the beef",
+          "lines": [
+            "Sprinkle the beef with the baking soda.",
+            "Toss to coat, separating the slices.",
+            "Leave it for 20 minutes."
+          ]
+        },
+        {
+          "title": "Rinse and season",
+          "lines": [
+            "Rinse the beef in a colander.",
+            "Pat off the extra water.",
+            "Toss with the 2 tsp light soy sauce."
+          ]
+        },
+        {
+          "title": "Mix the sauce",
+          "lines": [
+            "Stir the sauce ingredients together in a small bowl."
+          ]
+        },
+        {
+          "title": "Prepare the noodles",
+          "lines": [
+            "Soak them as the packet says, usually 5 to 10 minutes.",
+            "Drain, then rinse so they don't go gluey."
+          ]
+        },
+        {
+          "title": "Cook onion, beef, then garlic",
+          "lines": [
+            "Heat the oil in a large wok over high heat.",
+            "Add the onion for 30 seconds.",
+            "Add the beef for about 1 minute.",
+            "Add the garlic for 30 seconds."
+          ]
+        },
+        {
+          "title": "Add everything else",
+          "lines": [
+            "Add the green stems and toss for 1 minute.",
+            "Add the leaves, then the noodles, then the sauce.",
+            "Toss 1 1/2 to 2 minutes until the sauce coats the noodles.",
+            "Serve right away."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Chinese-Style Braised Mackerel",
+      "servings": "2",
+      "prep": "15 min",
+      "cook": "20-25 min",
+      "credit": "Video: XiaosKitchen",
+      "qr": "pkg:/images/mychannel/qr_recipe_1.png",
+      "source": "https://pixabay.com/videos/cooking-mackerel-fish-food-healthy-11635/",
+      "thumb": "http://YOUR_JELLYFIN_IP:8096/Items/2a5b4aec40db3660e294a0e1abb4f0f7/Images/Primary?maxWidth=1920&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "video": "http://YOUR_JELLYFIN_IP:8096/Videos/2a5b4aec40db3660e294a0e1abb4f0f7/stream.mp4?static=true&ApiKey=YOUR_JELLYFIN_API_KEY",
+      "ingredients": [
+        {
+          "group": "Main & Aromatics",
+          "items": [
+            "2 whole fresh mackerel, cleaned and patted dry",
+            "2 large tomatoes, diced",
+            "2 spring onions, chopped (whites and greens separated)",
+            "4 cloves garlic, minced",
+            "1-inch piece fresh ginger, minced",
+            "1 whole star anise",
+            "2 tbsp neutral cooking oil"
+          ]
+        },
+        {
+          "group": "Sauce & Seasoning",
+          "items": [
+            "2 tbsp soy sauce",
+            "2 tbsp tomato paste, divided",
+            "1-2 tbsp Shaoxing cooking wine",
+            "1-1.5 tbsp sugar, to taste",
+            "1 tsp salt, to taste",
+            "1-1.5 cups water"
+          ]
+        },
+        {
+          "group": "Garnish (optional)",
+          "items": [
+            "Fresh mint sprigs",
+            "Edible purple or blue flowers"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "title": "Prepare the aromatics",
+          "lines": [
+            "Heat the oil in a wok over medium heat.",
+            "Add the ginger, garlic, spring onion whites, star anise and 1 tsp tomato paste.",
+            "Saute 1 to 2 minutes until fragrant."
+          ]
+        },
+        {
+          "title": "Add the tomatoes",
+          "lines": [
+            "Add the tomatoes and the rest of the spring onions.",
+            "Stir-fry 1 to 2 minutes until soft and juicy."
+          ]
+        },
+        {
+          "title": "Season the sauce",
+          "lines": [
+            "Add the soy sauce, remaining tomato paste, cooking wine, salt and sugar.",
+            "Stir until everything dissolves."
+          ]
+        },
+        {
+          "title": "Add the fish",
+          "lines": [
+            "Lay the whole mackerel into the sauce."
+          ]
+        },
+        {
+          "title": "Pour in water and braise",
+          "lines": [
+            "Add water until it comes halfway up the fish.",
+            "Bring to a gentle boil, then cover.",
+            "Lower the heat and simmer 10 to 12 minutes."
+          ]
+        },
+        {
+          "title": "Finish and reduce",
+          "lines": [
+            "Uncover and spoon the sauce over the fish.",
+            "Simmer 3 to 5 minutes until thick."
+          ]
+        },
+        {
+          "title": "Plate and serve",
+          "lines": [
+            "Move the fish to a platter.",
+            "Spoon the sauce over the top.",
+            "Garnish with mint and flowers. Serve with rice."
+          ]
+        }
+      ],
+      "category": "Dinner",
+      "yield": "Serves 2",
+      "qrLabel": "Original video",
+      "short": "Braised Mackerel",
+      "description": "Whole mackerel braised in a sweet and tangy tomato sauce with ginger, garlic and star anise. Watch the video, then follow the cards."
+    },
+    {
+      "title": "Greek Chicken Gyros",
+      "short": "Chicken Gyros",
+      "category": "Dinner",
+      "yield": "Serves 5-6",
+      "prep": "20 min + overnight marinade",
+      "cook": "10 min",
+      "credit": "RecipeTin Eats  \u00b7  Photo: Midjourney",
+      "source": "https://www.recipetineats.com/kalimeras-famous-chicken-gyros/",
+      "qr": "pkg:/images/mychannel/qr_recipe_4.png",
+      "qrLabel": "Full recipe",
+      "video": "",
+      "thumb": "pkg:/images/mychannel/recipe_gyros.jpg",
+      "description": "Juicy marinated chicken wrapped in warm pita with a creamy sauce, salad and chips. The secret is a little curry powder in the marinade.",
+      "ingredients": [
+        {
+          "group": "Chicken",
+          "items": [
+            "1.25 kg (2.5 lb) boneless, skinless chicken thighs",
+            "1/3 cup extra virgin olive oil"
+          ]
+        },
+        {
+          "group": "Marinade spices",
+          "items": [
+            "1 tbsp sweet paprika",
+            "1 tbsp mustard powder",
+            "1 tbsp dried oregano",
+            "1/2 tbsp mild curry powder",
+            "1 1/2 tsp kosher salt",
+            "1/2 tsp black pepper"
+          ]
+        },
+        {
+          "group": "Gyros sauce",
+          "items": [
+            "1 cup Greek yogurt",
+            "3 tbsp mayonnaise",
+            "3 tbsp extra virgin olive oil",
+            "2 tbsp yellow mustard",
+            "2 tsp garlic powder",
+            "2 tsp sweet paprika",
+            "1/2 tsp kosher salt"
+          ]
+        },
+        {
+          "group": "To serve",
+          "items": [
+            "5 soft pita breads",
+            "3 cups romaine, finely sliced",
+            "2 tomatoes, sliced",
+            "1/2 small red onion, diced",
+            "400 g (14 oz) thick-cut chips (optional)"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "title": "Marinate the chicken",
+          "lines": [
+            "Mix the oil and spices in a large bowl.",
+            "Add the chicken and coat it well.",
+            "Refrigerate overnight, or at least 3 hours."
+          ]
+        },
+        {
+          "title": "Make the sauce",
+          "lines": [
+            "Mix the sauce ingredients in a bowl.",
+            "Let it sit at least 20 minutes."
+          ]
+        },
+        {
+          "title": "Make the chips",
+          "lines": [
+            "Bake, fry or air-fry the chips.",
+            "Salt them.",
+            "Keep them warm in a low oven."
+          ]
+        },
+        {
+          "title": "Cook the chicken",
+          "lines": [
+            "Heat a grill or non-stick pan to medium-high.",
+            "Cook 3 to 4 minutes per side until golden and cooked through.",
+            "Wipe the pan between batches."
+          ]
+        },
+        {
+          "title": "Rest and slice",
+          "lines": [
+            "Cover loosely with foil and rest 3 minutes.",
+            "Slice into 1 cm (1/2 inch) pieces."
+          ]
+        },
+        {
+          "title": "Warm the pitas",
+          "lines": [
+            "Microwave the stack 45 to 90 seconds, or warm in a pan.",
+            "Keep them soft so they fold without cracking."
+          ]
+        },
+        {
+          "title": "Wrap it up",
+          "lines": [
+            "Spread 3 tbsp of sauce on a pita.",
+            "Add chicken, lettuce, tomato, onion and chips.",
+            "Drizzle more sauce, fold, and wrap in foil."
+          ]
+        }
+      ]
+    }
+  ],
+  "family": [
+    {
+      "name": "Robert",
+      "relation": "Grandpa",
+      "group": "Grandparents",
+      "avatar": "m",
+      "born": "February 14, 1946",
+      "knownFor": "Always behind the camera on family trips.",
+      "social": [
+        "facebook"
+      ],
+      "occupation": "Retired mail carrier"
+    },
+    {
+      "name": "Josephine",
+      "relation": "Grandma Jo",
+      "group": "Grandparents",
+      "avatar": "f",
+      "born": "March 4, 1942",
+      "died": "June 9, 2023",
+      "knownFor": "The best mac and cheese in the family.",
+      "obituary": [
+        "Josephine \"Jo\" Carter, 81, passed away peacefully at home on June 9, 2023, surrounded by her family.",
+        "Born March 4, 1942, she raised three children and never let a Sunday go by without dinner on the table. Her mac and cheese was the reason half the family came home.",
+        "She is survived by Robert, her husband of 58 years, her children Steven, Linda and Denise, and her grandchildren Isabella, Susan and Tyler. Her recipe lives on in this album."
+      ],
+      "occupation": "School cafeteria manager (retired)"
+    },
+    {
+      "name": "Steven",
+      "relation": "Dad",
+      "group": "Parents",
+      "avatar": "m",
+      "born": "August 22, 1984",
+      "knownFor": "Taught Isabella to ride without training wheels.",
+      "social": [
+        "facebook",
+        "instagram"
+      ],
+      "occupation": "Electrician"
+    },
+    {
+      "name": "Angela",
+      "relation": "Mom",
+      "group": "Parents",
+      "avatar": "f",
+      "born": "May 30, 1986",
+      "knownFor": "Keeps every family photo, and the camera charged.",
+      "social": [
+        "instagram"
+      ],
+      "occupation": "Nurse"
+    },
+    {
+      "name": "Isabella",
+      "relation": "Daughter",
+      "group": "Kids",
+      "avatar": "f",
+      "born": "September 12, 2018",
+      "knownFor": "Just learned to ride her bike on her own.",
+      "occupation": "Student, 2nd grade"
+    },
+    {
+      "name": "Linda",
+      "relation": "Aunt",
+      "group": "Aunts & Uncles",
+      "avatar": "f",
+      "born": "January 19, 1981",
+      "knownFor": "Plans every birthday trip to the fair.",
+      "social": [
+        "facebook"
+      ],
+      "occupation": "Real estate agent"
+    },
+    {
+      "name": "Denise",
+      "relation": "Aunt",
+      "group": "Aunts & Uncles",
+      "avatar": "f",
+      "born": "December 2, 1979",
+      "knownFor": "Front row at every one of Tyler's shows.",
+      "social": [
+        "facebook",
+        "instagram"
+      ],
+      "occupation": "Music teacher"
+    },
+    {
+      "name": "Susan",
+      "relation": "Cousin",
+      "group": "Cousins",
+      "avatar": "f",
+      "born": "July 18, 2014",
+      "knownFor": "Always picks the swing ride first.",
+      "occupation": "Student, 7th grade"
+    },
+    {
+      "name": "Tyler",
+      "relation": "Cousin",
+      "group": "Cousins",
+      "avatar": "m",
+      "born": "November 3, 2008",
+      "knownFor": "Guitar for The Backyard Echoes.",
+      "social": [
+        "instagram",
+        "tiktok"
+      ],
+      "occupation": "High school senior"
+    },
+    {
+      "name": "Jake",
+      "relation": "Family friend",
+      "group": "Friends",
+      "avatar": "m",
+      "born": "April 7, 1990",
+      "knownFor": "Never misses a walk with Duke.",
+      "social": [
+        "instagram"
+      ],
+      "occupation": "Dog trainer"
+    },
+    {
+      "name": "Mary",
+      "relation": "Family friend",
+      "group": "Friends",
+      "avatar": "f",
+      "born": "October 29, 1991",
+      "knownFor": "Peanut's favorite person.",
+      "social": [
+        "instagram",
+        "tiktok"
+      ],
+      "occupation": "Graphic designer"
+    },
+    {
+      "name": "Dana",
+      "relation": "Family friend",
+      "group": "Friends",
+      "avatar": "f",
+      "born": "March 15, 1993",
+      "knownFor": "Filmed Peanut's first walk.",
+      "social": [
+        "tiktok"
+      ],
+      "occupation": "Photographer"
+    }
+  ]
+}

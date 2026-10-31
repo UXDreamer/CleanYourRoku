@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AppTile" extends="Group">
+<interface><field id="itemContent" type="node" onChange="showContent" /></interface>
+<script type="text/brightscript"><![CDATA[
+' Tiles get reused as the grid scrolls, so every tile resets the name bar.
+' Only the My Channel tile sets shortDescriptionLine1, which shows the owner's name under its image.
+sub showContent()
+    item = m.top.itemContent
+    logo = m.top.findNode("logo")
+    logo.uri = item.HDPosterUrl
+    name = item.shortDescriptionLine1
+    hasName = (name <> invalid and name <> "")
+    m.top.findNode("bar").visible = hasName
+    m.top.findNode("name").visible = hasName
+    if hasName then
+        logo.height = 236
+        m.top.findNode("name").text = name
+    else
+        logo.height = 300
+    end if
+end sub
+]]></script>
+<children>
+    <Poster id="logo" width="400" height="300" loadDisplayMode="scaleToFit" />
+    <Rectangle id="bar" visible="false" translation="[0,244]" width="400" height="56" color="0x13294BFF" />
+    <Label id="name" visible="false" translation="[0,244]" width="400" height="56" horizAlign="center" vertAlign="center" font="font:MediumBoldSystemFont" color="0xFFFFFFFF" />
+</children>
+</component>
