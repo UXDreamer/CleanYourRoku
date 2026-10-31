@@ -37,7 +37,7 @@ Typos, unclear steps, a setting that moved in a newer Roku update: all welcome. 
 
 ## How to contribute
 
-**The easy way (no Git needed):** [open an issue](https://github.com/dlpressl/CleanYourRoku/issues/new) and paste your notes. You can drag screenshots straight into the box.
+**The easy way (no Git needed):** [open an issue](https://github.com/uxdreamer/CleanYourRoku/issues/new) and paste your notes. You can drag screenshots straight into the box.
 
 **The Git way:**
 

@@ -4,7 +4,7 @@
 
 I'm **Damien Pressley**, also known as **UX Dreamer**. I'm a graduate student in Human Systems Engineering at Arizona State University, where I study how people and technology work together, and where that partnership breaks down. I live in Mesa, Arizona, and I'm originally from Philadelphia.
 
-GitHub: [@dlpressl](https://github.com/dlpressl)
+GitHub: [@uxdreamer](https://github.com/uxdreamer)
 
 ---
 

@@ -28,7 +28,7 @@ AI tools helped build this project. The decisions about what it does, and what e
 
 Everyone who adds notes, fixes or before-and-after stories gets listed here. See [CONTRIBUTING.md](CONTRIBUTING.md) to add yours.
 
-- **Damien Pressley ([UX Dreamer](https://github.com/dlpressl))**, creator
+- **Damien Pressley ([UX Dreamer](https://github.com/uxdreamer))**, creator
 
 ---
 

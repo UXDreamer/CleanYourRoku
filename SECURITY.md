@@ -29,7 +29,7 @@ If you find a security issue, like a script that exposes something it shouldn't 
 
 Instead, report it privately through the repo's **Security** tab:
 
-**[Report a vulnerability](https://github.com/dlpressl/CleanYourRoku/security/advisories/new)**
+**[Report a vulnerability](https://github.com/uxdreamer/CleanYourRoku/security/advisories/new)**
 
 Include what you found, where, and how to reproduce it if you can. I'll respond as soon as I can and credit you in [CREDITS.md](CREDITS.md) once it's fixed, if you'd like.
 

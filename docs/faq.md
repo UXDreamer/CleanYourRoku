@@ -1,6 +1,6 @@
 # FAQ
 
-Common questions and fixes. Don't see yours? [Open an issue](https://github.com/dlpressl/CleanYourRoku/issues/new).
+Common questions and fixes. Don't see yours? [Open an issue](https://github.com/uxdreamer/CleanYourRoku/issues/new).
 
 ---
 

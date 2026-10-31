@@ -10,7 +10,7 @@ The launcher also has **My Channel**, a personal tile for your own family album.
 
 It was built with AI as a partner, not a decision-maker. Claude helped write code and work through problems, but every choice about what goes on the screen was made by a person. That's the whole point. You'll see the same idea throughout: every section explains *why*, not just *how*, so you can decide for yourself what's worth changing.
 
-Built by **Damien Pressley ([UX Dreamer](https://github.com/dlpressl))**, a Human Systems Engineering grad student at Arizona State University.
+Built by **Damien Pressley ([UX Dreamer](https://github.com/uxdreamer))**, a Human Systems Engineering grad student at Arizona State University.
 
 > Inspired by [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv), which does this for Android and Google TVs. Roku wasn't covered, so this project fills that gap.
 
@@ -105,7 +105,7 @@ Why sideloading: it's the only way to put a custom home screen on a Roku without
 ### Step 2: Get the code
 
 ```bash
-git clone https://github.com/dlpressl/CleanYourRoku.git
+git clone https://github.com/uxdreamer/CleanYourRoku.git
 cd CleanYourRoku
 ```
 
