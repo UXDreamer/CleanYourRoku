@@ -35,8 +35,8 @@ For Vizio, follow [docs/vizio.md](docs/vizio.md). Pairing shows a PIN on their T
 ## Security rules (non-negotiable)
 
 - **Never commit secrets:** API keys, Vizio auth tokens, Roku developer passwords, `genkey` passwords, signing keys. See [SECURITY.md](SECURITY.md).
-- **Read secrets from environment variables** (`ANTHROPIC_API_KEY`, `VIZIO_IP`, `VIZIO_AUTH`, `ROKU_IP`, `JELLYFIN_IP`, `JELLYFIN_API_KEY`), never hardcode them in scripts.
-- **Use placeholders in docs:** `<ROKU_IP>`, `<TV_IP>`, `<YOUR_AUTH_TOKEN>`. Never a real IP or token. `mychannel.json` keeps `YOUR_JELLYFIN_IP` and `YOUR_JELLYFIN_API_KEY`; real values only go into the build, as [docs/jellyfin.md](docs/jellyfin.md) explains.
+- **Read secrets from environment variables** (`ANTHROPIC_API_KEY`, `VIZIO_IP`, `VIZIO_AUTH`, `ROKU_IP`, `JELLYFIN_IP`, `JELLYFIN_API_KEY`, `JELLYFIN_MUSIC_LIBRARY_ID`, `JELLYFIN_USER_ID`), never hardcode them in scripts.
+- **Use placeholders in docs:** `<ROKU_IP>`, `<TV_IP>`, `<YOUR_AUTH_TOKEN>`. Never a real IP or token. `mychannel.json` keeps `YOUR_JELLYFIN_IP` and `YOUR_JELLYFIN_API_KEY`, and `source/jellyfin.json` also keeps `YOUR_MUSIC_LIBRARY_ID` and `YOUR_JELLYFIN_USER_ID`; real values only go into the build, as [docs/jellyfin.md](docs/jellyfin.md) explains.
 - **Don't commit** `*.zip`, `*.pkg`, `.env`, or pulled app logos (`images/app_*.png` other than `app_uxd.png` and `app_family.png`). `.gitignore` covers these; don't override it.
 - **Before every commit,** check the staged diff for anything that looks like a key, token, password or real local IP address.
 - **Photos:** if adding images, check backgrounds for personal information and strip location metadata.
@@ -51,12 +51,14 @@ CREDITS.md                Inspiration (Gathin23/cleanyourtv), tools, contributor
 docs/                     Guides: privacy settings, Roku setup, My Channel, Jellyfin, Vizio, ad muter, FAQ, research
 manifest                  App metadata (title, version, icons)
 source/main.brs           Entry point: creates HomeScene
+source/jellyfin.json      Music button settings (placeholders only; the build fills in real values)
 mychannel.json            My Channel content (made-up sample family, photos, videos, recipes, music, links); people edit this, not code
-components/HomeScene.xml  App grid, app list (m.apps), My Channel page, key handling
+components/HomeScene.xml  App grid, app list (m.apps), clock, Music/Video buttons and pop-ups, My Channel page, key handling
+components/JellyfinTask.xml  Task that asks Jellyfin for songs and playlists (key sent in the Authorization header)
 components/Launcher.xml   Task that opens the selected app (roAppManager.LaunchApp)
-components/AppTile.xml    One grid tile (the app's logo)
-images/                   App art and guide screenshots; pulled logos live here locally
-site/                     The cleanyourroku.com website (GitHub Pages deploys this folder)
+components/AppTile.xml    One grid tile (the app's logo, focus glow)
+images/                   Small app art, UI images and guide screenshots; pulled logos live here locally
+site/                     The cleanyourroku.com website (GitHub Pages deploys this folder; site/media/ hosts the app's large images)
 make_stills.py            Makes My Channel photos from Jellyfin videos
 scripts/pull_logos.py     Lists installed apps and pulls their icons via Roku ECP (port 8060)
 scripts/make_qr.py        Makes QR code images for My Channel's Share Links (needs: pip3 install segno)
@@ -66,7 +68,7 @@ scripts/rokuremote.py     Phone remote (work in progress; only the CleanYourRoku
 ## Roku facts to keep straight
 
 - **One sideloaded app at a time.** Installing a new zip replaces the old one.
-- **Back from an app goes to Roku's home**, not the launcher. Platform behavior; an app can't override it.
+- **Back from an app opened through the launcher returns to the launcher.** The remote's Home button always goes to Roku's home; an app can't override that.
 - **The ad panel on Roku's home screen can't be removed** by any setting. The launcher is an alternative home, not a modification of Roku's.
 - **ECP** (`http://<ROKU_IP>:8060`) handles app lists, icons, keypresses and launching (`/launch/dev` opens the sideloaded app). A `403` means Network access under "Control by mobile apps" needs to be Permissive. See the FAQ.
 - **Static analysis warnings** (`LaunchApp`, package size) don't block a beta.

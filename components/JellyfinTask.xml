@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="JellyfinTask" extends="Task">
+<interface>
+    <field id="url" type="string" />
+    <field id="key" type="string" />
+    <field id="result" type="string" alwaysNotify="true" />
+</interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.functionName = "go"
+end sub
+
+sub go()
+    xfer = CreateObject("roUrlTransfer")
+    xfer.SetUrl(m.top.url)
+    xfer.AddHeader("Authorization", "MediaBrowser Token=""" + m.top.key + """")
+    xfer.EnableEncodings(true)
+    r = xfer.GetToString()
+    if r = invalid then r = ""
+    m.top.result = r
+end sub
+]]></script>
+</component>

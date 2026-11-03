@@ -33,6 +33,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Stamp "Last updated" from the latest commit (Arizona time)
+        env:
+          TZ: America/Phoenix
+        run: |
+          iso=$(git log -1 --format=%cd --date=format-local:%Y-%m-%d)
+          nice=$(git log -1 --format=%cd --date=format-local:'%B %-d, %Y')
+          for f in site/index.html site/privacy.html site/terms.html site/support.html; do
+            sed -i -E "s#<time datetime=\"[^\"]*\" data-last-updated>[^<]*</time>#<time datetime=\"$iso\" data-last-updated>$nice</time>#" "$f"
+            grep -q "data-last-updated>$nice</time>" "$f" || { echo "::error file=$f::Last updated date was not set"; exit 1; }
+          done
+          echo "Last updated: $nice"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

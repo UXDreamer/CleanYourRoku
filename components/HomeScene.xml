@@ -28,6 +28,8 @@ sub init()
     m.grid.setFocus(true)
     m.launcher = CreateObject("roSGNode", "Launcher")
     m.title = m.top.findNode("title")
+    crStartClock()
+    crSideInit()
     m.fs = CreateObject("roFileSystem")
 
     ' My Channel: a section only shows up if mychannel.json has content for it
@@ -105,7 +107,7 @@ end sub
 
 ' Reads pkg:/mychannel.json. Missing fields fall back to blanks, so a typo shows a message instead of crashing.
 function loadMyChannel() as Object
-    ch = { name: "My Channel", tagline: "", tileImage: "pkg:/images/app_uxd_s.jpg", aboutName: "", aboutPhoto: "", bio: "", photos: [], links: [], videos: [], music: [], recipes: [], family: [] }
+    ch = { name: "My Channel", tagline: "", tileImage: "https://cleanyourroku.com/media/app_uxd_s.jpg", aboutName: "", aboutPhoto: "", bio: "", photos: [], links: [], videos: [], music: [], recipes: [], family: [] }
     raw = ReadAsciiFile("pkg:/mychannel.json")
     cfg = invalid
     if raw <> "" then cfg = ParseJson(raw)
@@ -2670,6 +2672,7 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
         end if
         return true
     end if
+    if crSideKey(key) then return true
     if key = "OK" then
         i = m.grid.itemFocused
         if m.apps[i][1] = "mychannel" then
@@ -2684,13 +2687,437 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
     end if
     return false
 end function
+
+sub crStartClock()
+    m.crClock = m.top.findNode("crClock")
+    m.crDate = m.top.findNode("crDate")
+    m.crTimer = m.top.findNode("crClockTimer")
+    m.crTimer.observeField("fire", "crClockTick")
+    m.crTimer.control = "start"
+    crClockTick()
+end sub
+
+sub crClockTick()
+    dt = CreateObject("roDateTime")
+    dt.ToLocalTime()
+    h = dt.GetHours()
+    ampm = "AM"
+    if h >= 12 then ampm = "PM"
+    h = h mod 12
+    if h = 0 then h = 12
+    mi = dt.GetMinutes()
+    ms = mi.ToStr()
+    if mi < 10 then ms = "0" + ms
+    m.crClock.text = h.ToStr() + ":" + ms + " " + ampm
+    months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+    m.crDate.text = dt.GetWeekday() + ", " + months[dt.GetMonth() - 1] + " " + dt.GetDayOfMonth().ToStr()
+end sub
+
+sub crSideInit()
+    m.crSide = ""
+    m.crPopOpen = ""
+    m.crMusicBtn = m.top.findNode("crMusicBtn")
+    m.crVideoBtn = m.top.findNode("crVideoBtn")
+    m.crPop = m.top.findNode("crPop")
+    m.crPopList = m.top.findNode("crPopList")
+    m.crPopList.observeField("itemSelected", "crOnSongPick")
+    m.crAudio = m.top.findNode("crAudio")
+    m.crAudio.observeField("state", "crOnAudioState")
+    m.crNow = m.top.findNode("crNow")
+    m.crNowName = ""
+    m.crSongs = invalid
+    m.crSongsErr = ""
+    m.crJf = invalid
+    raw = ReadAsciiFile("pkg:/source/jellyfin.json")
+    if raw <> "" then m.crJf = ParseJson(raw)
+    if m.crJf <> invalid and Instr(1, raw, "YOUR_") > 0 then m.crJf = invalid
+    m.crRecent = []
+    m.crPlaylists = invalid
+    m.crDrill = invalid
+    m.crRows = []
+    sec = CreateObject("roRegistrySection", "cleanyourroku")
+    if sec.Exists("recentSongs") then
+        saved = ParseJson(sec.Read("recentSongs"))
+        if saved <> invalid then m.crRecent = saved
+    end if
+    crDrawSide()
+end sub
+
+sub crDrawSide()
+    off = "0x2A1A3ACC"
+    onc = "0xD2042DFF"
+    if m.crSide = "music" then m.crMusicBtn.blendColor = onc else m.crMusicBtn.blendColor = off
+    if m.crSide = "video" then m.crVideoBtn.blendColor = onc else m.crVideoBtn.blendColor = off
+end sub
+
+sub crOpenPop(kind as String)
+    m.crPopOpen = kind
+    m.crDrill = invalid
+    if kind = "music" then
+        m.crCats = ["Recently Played", "Songs", "Artists", "Albums", "Playlists"]
+        m.crCat = 1
+        crFetchSongs()
+        crFetchPlaylists()
+    else
+        m.top.findNode("crPopTitle").text = "Video"
+        m.crCats = ["Recently Played", "Movies", "Shows", "Home Videos"]
+        m.crCat = 0
+    end if
+    row = m.top.findNode("crPopCatRow")
+    row.removeChildrenIndex(row.getChildCount(), 0)
+    for each name in m.crCats
+        lbl = row.createChild("Label")
+        lbl.text = name
+        lbl.font = "font:MediumBoldSystemFont"
+    end for
+    m.crPop.visible = true
+    crDrawCats()
+end sub
+
+sub crDrawCats()
+    row = m.top.findNode("crPopCatRow")
+    for i = 0 to row.getChildCount() - 1
+        if i = m.crCat then
+            row.getChild(i).color = "0xD2042DFF"
+        else
+            row.getChild(i).color = "0xFFFFFFAA"
+        end if
+    end for
+    cat = m.crCats[m.crCat]
+    body = m.top.findNode("crPopBody")
+    title = m.top.findNode("crPopTitle")
+    rows = invalid
+    msg = ""
+    if m.crPopOpen = "music" then
+        if m.crDrill <> invalid then
+            title.text = "Music  ·  " + m.crDrill.title
+            if m.crDrill.songs = invalid then
+                msg = "Loading..."
+            else
+                rows = crSongRows(m.crDrill.songs)
+            end if
+        else
+            title.text = "Music"
+            if cat = "Recently Played" then
+                rows = crSongRows(m.crRecent)
+                if rows.Count() = 0 then msg = "Play a song and it shows up here."
+            else if cat = "Playlists" then
+                if m.crPlaylists = invalid then
+                    msg = "Loading your playlists..."
+                else
+                    rows = []
+                    for each p in m.crPlaylists
+                        rows.Push({kind: "playlist", id: p.Id, name: crNice(p.Name)})
+                    end for
+                    if rows.Count() = 0 then msg = "No playlists yet. Make one in Jellyfin and it shows up here."
+                end if
+            else if m.crSongs = invalid then
+                msg = "Loading your songs..."
+            else if m.crSongsErr <> "" then
+                msg = m.crSongsErr
+            else if cat = "Songs" then
+                rows = crSongRows(m.crSongs)
+            else if cat = "Artists" then
+                rows = crGroup("AlbumArtist", "Unknown artist")
+            else if cat = "Albums" then
+                rows = crGroup("Album", "No album")
+            end if
+        end if
+    else
+        msg = "Nothing in " + cat + " yet."
+    end if
+    if rows <> invalid and rows.Count() > 0 then
+        m.crRows = rows
+        content = CreateObject("roSGNode", "ContentNode")
+        for each r in rows
+            it = content.CreateChild("ContentNode")
+            it.title = "   " + crRowLabel(r)
+        end for
+        m.crPopList.content = content
+        m.crPopList.visible = true
+        body.text = ""
+        m.crPopList.setFocus(true)
+    else
+        m.crRows = []
+        m.crPopList.visible = false
+        if msg = "" then msg = "Nothing in here yet."
+        body.text = msg
+        m.top.findNode("crSideBtns").setFocus(true)
+    end if
+end sub
+
+function crSongRows(list as Dynamic) as Object
+    rows = []
+    if list = invalid then return rows
+    for each song in list
+        rows.Push({kind: "song", song: song})
+    end for
+    return rows
+end function
+
+function crGroup(field as String, emptyName as String) as Object
+    groups = {}
+    order = []
+    for each song in m.crSongs
+        k = song.Lookup(field)
+        if k = invalid or k = "" then k = emptyName
+        if groups[k] = invalid then
+            groups[k] = []
+            order.Push(k)
+        end if
+        groups[k].Push(song)
+    end for
+    order.Sort()
+    rows = []
+    for each k in order
+        rows.Push({kind: "group", name: k, songs: groups[k]})
+    end for
+    return rows
+end function
+
+function crRowLabel(r as Object) as String
+    if r.kind = "song" then return crSongLabel(r.song)
+    if r.kind = "group" then return r.name + "    (" + r.songs.Count().ToStr() + ")"
+    return r.name
+end function
+
+function crNice(n as Dynamic) as String
+    if n = invalid then return ""
+    s = n
+    tail = CreateObject("roRegex", "[-_ ]?\d{4,}$", "")
+    if Instr(1, s, "_") = 0 and not tail.IsMatch(s) then return s
+    s = tail.Replace(s, "")
+    s = CreateObject("roRegex", "[-_]+", "").ReplaceAll(s, " ")
+    out = ""
+    for each w in s.Split(" ")
+        if w <> "" then
+            if out <> "" then out = out + " "
+            out = out + UCase(Left(w, 1)) + Mid(w, 2)
+        end if
+    end for
+    return out
+end function
+
+function crSongLabel(song as Object) as String
+    n = crNice(song.Name)
+    if song.AlbumArtist <> invalid and song.AlbumArtist <> "" then n = n + "  ·  " + song.AlbumArtist
+    return n
+end function
+
+sub crClosePop()
+    m.crPop.visible = false
+    m.crPopOpen = ""
+    m.crDrill = invalid
+    m.top.findNode("crSideBtns").setFocus(true)
+end sub
+
+function crTask(url as String, callback as String) as Object
+    t = CreateObject("roSGNode", "JellyfinTask")
+    t.key = m.crJf.key
+    t.url = url
+    t.observeField("result", callback)
+    t.control = "run"
+    return t
+end function
+
+sub crFetchSongs()
+    m.crSongs = invalid
+    m.crSongsErr = ""
+    if m.crJf = invalid then
+        m.crSongs = []
+        m.crSongsErr = "Jellyfin isn't set up yet. Fill in source/jellyfin.json when you build. See docs/jellyfin.md."
+        return
+    end if
+    m.crSongTask = crTask(m.crJf.server + "/Items?ParentId=" + m.crJf.musicLibrary + "&IncludeItemTypes=Audio&Recursive=true&SortBy=SortName&Fields=AlbumArtist", "crOnSongs")
+end sub
+
+sub crOnSongs()
+    r = m.crSongTask.result
+    d = invalid
+    if r <> "" then d = ParseJson(r)
+    if d = invalid or d.Items = invalid then
+        m.crSongs = []
+        m.crSongsErr = "Couldn't reach Jellyfin. Is the server on, and are the values in source/jellyfin.json right?"
+    else
+        m.crSongs = d.Items
+        if m.crSongs.Count() = 0 then m.crSongsErr = "No songs in your Jellyfin music library yet."
+    end if
+    if m.crPopOpen = "music" and m.crDrill = invalid then
+        cat = m.crCats[m.crCat]
+        if cat <> "Recently Played" and cat <> "Playlists" then crDrawCats()
+    end if
+end sub
+
+sub crFetchPlaylists()
+    m.crPlaylists = invalid
+    if m.crJf = invalid then
+        m.crPlaylists = []
+        return
+    end if
+    m.crPlTask = crTask(m.crJf.server + "/Items?IncludeItemTypes=Playlist&Recursive=true&SortBy=SortName", "crOnPlaylists")
+end sub
+
+sub crOnPlaylists()
+    r = m.crPlTask.result
+    d = invalid
+    if r <> "" then d = ParseJson(r)
+    if d = invalid or d.Items = invalid then
+        m.crPlaylists = []
+    else
+        m.crPlaylists = d.Items
+    end if
+    if m.crPopOpen = "music" and m.crDrill = invalid and m.crCats[m.crCat] = "Playlists" then crDrawCats()
+end sub
+
+sub crFetchPlaylistItems(id as String)
+    m.crPlItemsTask = crTask(m.crJf.server + "/Playlists/" + id + "/Items?UserId=" + m.crJf.userId, "crOnPlaylistItems")
+end sub
+
+sub crOnPlaylistItems()
+    r = m.crPlItemsTask.result
+    d = invalid
+    if r <> "" then d = ParseJson(r)
+    songs = []
+    if d <> invalid and d.Items <> invalid then songs = d.Items
+    if m.crDrill <> invalid then
+        m.crDrill.songs = songs
+        crDrawCats()
+    end if
+end sub
+
+sub crOnSongPick()
+    i = m.crPopList.itemSelected
+    if m.crRows = invalid or i < 0 or i >= m.crRows.Count() then return
+    r = m.crRows[i]
+    if r.kind = "song" then
+        crPlaySong(r.song)
+    else if r.kind = "group" then
+        m.crDrill = {title: r.name, songs: r.songs}
+        crDrawCats()
+    else if r.kind = "playlist" then
+        m.crDrill = {title: r.name, songs: invalid}
+        crDrawCats()
+        crFetchPlaylistItems(r.id)
+    end if
+end sub
+
+sub crAddRecent(song as Object)
+    keep = [{Id: song.Id, Name: song.Name, AlbumArtist: song.AlbumArtist, Album: song.Album}]
+    for each old in m.crRecent
+        if old.Id <> song.Id and keep.Count() < 10 then keep.Push(old)
+    end for
+    m.crRecent = keep
+    sec = CreateObject("roRegistrySection", "cleanyourroku")
+    sec.Write("recentSongs", FormatJson(keep))
+    sec.Flush()
+end sub
+
+sub crPlaySong(song as Object)
+    if m.crJf = invalid then return
+    c = CreateObject("roSGNode", "ContentNode")
+    c.url = m.crJf.server + "/Audio/" + song.Id + "/stream?static=true"
+    c.HttpHeaders = ["Authorization:MediaBrowser Token=""" + m.crJf.key + """"]
+    c.title = crNice(song.Name)
+    m.crNowName = crSongLabel(song)
+    m.crNow.text = "Loading:  " + m.crNowName
+    m.crAudio.content = c
+    m.crAudio.control = "play"
+    crAddRecent(song)
+end sub
+
+sub crOnAudioState()
+    st = m.crAudio.state
+    if st = "playing" then
+        m.crNow.text = "Now playing:  " + m.crNowName + "      (Play/Pause on remote)"
+    else if st = "paused" then
+        m.crNow.text = "Paused:  " + m.crNowName
+    else if st = "finished" then
+        m.crNow.text = "Finished:  " + m.crNowName
+    else if st = "error" then
+        m.crNow.text = "Couldn't play that song: " + m.crAudio.errorMsg
+    end if
+end sub
+
+function crSideKey(key as String) as Boolean
+    if key = "play" and m.crAudio.content <> invalid then
+        if m.crAudio.state = "playing" then
+            m.crAudio.control = "pause"
+        else if m.crAudio.state = "paused" then
+            m.crAudio.control = "resume"
+        end if
+        return true
+    end if
+    if m.crPopOpen <> "" then
+        if key = "back" then
+            if m.crDrill <> invalid then
+                m.crDrill = invalid
+                crDrawCats()
+            else
+                crClosePop()
+            end if
+        else if key = "left" and m.crCat > 0 then
+            m.crCat = m.crCat - 1
+            m.crDrill = invalid
+            crDrawCats()
+        else if key = "right" and m.crCat < m.crCats.Count() - 1 then
+            m.crCat = m.crCat + 1
+            m.crDrill = invalid
+            crDrawCats()
+        end if
+        return true
+    end if
+    if m.crSide <> "" then
+        if key = "up" then
+            m.crSide = "music"
+            crDrawSide()
+        else if key = "down" then
+            m.crSide = "video"
+            crDrawSide()
+        else if key = "right" or key = "back" then
+            m.crSide = ""
+            crDrawSide()
+            m.grid.setFocus(true)
+        else if key = "OK" then
+            crOpenPop(m.crSide)
+        end if
+        return true
+    end if
+    if key = "left" and m.grid.hasFocus() and (m.grid.itemFocused mod 4) = 0 then
+        m.crSide = "music"
+        crDrawSide()
+        m.top.findNode("crSideBtns").setFocus(true)
+        return true
+    end if
+    return false
+end function
 ]]></script>
 <children>
-    <Poster uri="pkg:/images/bg.jpg" width="1920" height="1080" />
-    <Label id="title" text="My Apps" translation="[120,90]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
-    <MarkupGrid id="grid" translation="[120,240]" itemComponentName="AppTile"
-        numColumns="4" numRows="2" itemSize="[400,300]" itemSpacing="[30,30]"
+    <Poster uri="https://cleanyourroku.com/media/bg.jpg" loadingBitmapUri="pkg:/images/bg_tiny.jpg" failedBitmapUri="pkg:/images/bg_tiny.jpg" width="1920" height="1080" />
+    <Label id="title" text="My Apps" translation="[260,90]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+    <Label id="crClock" translation="[1160,70]" width="500" horizAlign="right" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+    <Label id="crDate" translation="[1160,140]" width="500" horizAlign="right" font="font:SmallSystemFont" color="0xFFFFFFCC" />
+    <Timer id="crClockTimer" repeat="true" duration="15" />
+    <Group id="crSideBtns">
+        <Poster id="crMusicBtn" translation="[45,435]" width="170" height="70" uri="pkg:/images/btn_round.png" blendColor="0x2A1A3ACC" />
+        <Label text="Music" translation="[45,435]" width="170" height="70" horizAlign="center" vertAlign="center" font="font:MediumBoldSystemFont" color="0xFFFFFFFF" />
+        <Poster id="crVideoBtn" translation="[45,525]" width="170" height="70" uri="pkg:/images/btn_round.png" blendColor="0x2A1A3ACC" />
+        <Label text="Video" translation="[45,525]" width="170" height="70" horizAlign="center" vertAlign="center" font="font:MediumBoldSystemFont" color="0xFFFFFFFF" />
+    </Group>
+    <Label id="crNow" translation="[260,815]" width="1400" font="font:SmallBoldSystemFont" color="0xFFFFFFFF" />
+    <Audio id="crAudio" />
+    <MarkupGrid id="grid" translation="[260,250]" itemComponentName="AppTile" drawFocusFeedback="false"
+        numColumns="4" numRows="2" itemSize="[320,240]" itemSpacing="[40,40]"
         vertFocusAnimationStyle="floatingFocus" />
+    <Group id="crPop" visible="false">
+        <Rectangle width="1920" height="1080" color="0x000000AA" />
+        <Poster translation="[310,160]" width="1300" height="760" uri="pkg:/images/panel_round.png" blendColor="0x1E1030F2" />
+        <Label id="crPopTitle" translation="[380,210]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+        <LayoutGroup id="crPopCatRow" translation="[380,300]" layoutDirection="horiz" itemSpacings="[60]" />
+        <Rectangle translation="[380,360]" width="1160" height="2" color="0xFFFFFF33" />
+        <Label id="crPopBody" translation="[380,420]" width="1160" wrap="true" font="font:MediumSystemFont" color="0xFFFFFF99" />
+        <LabelList id="crPopList" translation="[380,400]" itemSize="[1160,60]" itemSpacing="[0,8]" numRows="6" vertFocusAnimationStyle="floatingFocus" focusBitmapUri="pkg:/images/list_focus.png" color="0xFFFFFFCC" focusedColor="0xFFFFFFFF" visible="false" />
+        <Label text="Back: Close" translation="[380,850]" font="font:SmallSystemFont" color="0xFFFFFF88" />
+    </Group>
 
     <!-- My Channel. Content comes from mychannel.json; see docs/my-channel.md -->
     <Group id="channel" visible="false">
@@ -2753,7 +3180,7 @@ end function
         </Group>
 
         <Group id="musicView" visible="false">
-            <Poster id="record" uri="pkg:/images/mychannel/record_1.png" translation="[830,130]" width="500" height="500" scaleRotateCenter="[250,250]" />
+            <Poster id="record" uri="https://cleanyourroku.com/media/mychannel/record_1.png" translation="[830,130]" width="500" height="500" scaleRotateCenter="[250,250]" />
             <Animation id="spin" duration="3" repeat="true" easeFunction="linear">
                 <FloatFieldInterpolator key="[0.0, 1.0]" keyValue="[0.0, -6.2832]" fieldToInterp="record.rotation" />
             </Animation>

@@ -10,7 +10,9 @@ Usage:
     python3 scripts/pull_logos.py --roku <ROKU_IP>          # download icons for the launcher's apps
 
 You can also set ROKU_IP in your environment instead of passing --roku.
-Uses only the Python standard library. On a Mac, non-PNG icons are converted with sips.
+Uses the Python standard library. On a Mac, non-PNG icons are converted with sips.
+If Pillow is installed (pip3 install pillow), each logo also gets rounded corners
+(7% of its width) to match the launcher's tiles. Without it, logos stay square.
 """
 import argparse, os, re, shutil, subprocess, sys, urllib.error, urllib.request
 import xml.etree.ElementTree as ET
@@ -18,6 +20,25 @@ import xml.etree.ElementTree as ET
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCENE = os.path.join(ROOT, "components", "HomeScene.xml")
 IMAGES = os.path.join(ROOT, "images")
+CORNER = 0.07  # corner radius as a share of the logo's width, same as the launcher's tiles
+
+def round_corners(path):
+    # Returns False when Pillow isn't installed, so the logo is left as downloaded
+    try:
+        from PIL import Image, ImageChops, ImageDraw
+    except ImportError:
+        return False
+    img = Image.open(path).convert("RGBA")
+    w, h = img.size
+    s = 4  # draw the mask 4x larger, then shrink it, for smooth edges
+    mask = Image.new("L", (w * s, h * s), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w * s - 1, h * s - 1), radius=w * CORNER * s, fill=255)
+    mask = mask.resize((w, h), Image.LANCZOS)
+    img.putalpha(ImageChops.darker(img.getchannel("A"), mask))  # keeps any transparency the logo already had
+    out = Image.new("RGBA", img.size)  # a fresh image carries no metadata
+    out.paste(img)
+    out.save(path, "PNG", optimize=True)
+    return True
 
 def get(roku, path):
     try:
@@ -57,6 +78,7 @@ def main():
         return
 
     os.makedirs(IMAGES, exist_ok=True)
+    rounded = None
     for name, app_id in launcher_apps():
         if app_id not in apps:
             print("skip   ", name, "(" + app_id + ") is not installed on this Roku")
@@ -72,7 +94,10 @@ def main():
                 f.write(data)
             subprocess.run(["sips", "-s", "format", "png", tmp, "--out", out], capture_output=True)
             os.remove(tmp)
+        rounded = round_corners(out)
         print("saved  ", name, "->", os.path.relpath(out, ROOT))
+    if rounded is False:
+        print("Logos are square. For rounded corners like the launcher's tiles: pip3 install pillow, then run this again.")
 
 if __name__ == "__main__":
     main()

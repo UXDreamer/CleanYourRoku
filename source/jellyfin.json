@@ -1,0 +1,7 @@
+{
+  "server": "http://YOUR_JELLYFIN_IP:8096",
+  "key": "YOUR_JELLYFIN_API_KEY",
+  "musicLibrary": "YOUR_MUSIC_LIBRARY_ID",
+  "videoLibrary": "",
+  "userId": "YOUR_JELLYFIN_USER_ID"
+}

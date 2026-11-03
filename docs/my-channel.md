@@ -41,7 +41,7 @@ The easiest way to learn the fields is to copy a sample entry and change it. Add
 
 **Leave a section out** by making its list `[]`, and it disappears from the menu. About is always there.
 
-Images inside the app start with `pkg:/`, which means "inside this app's zip." `pkg:/images/mychannel/still_1.jpg` is the file `images/mychannel/still_1.jpg`.
+An image can be a file in the zip or a link. Paths that start with `pkg:/` mean "inside this app's zip": `pkg:/images/mychannel/photo_1.jpg` is the file `images/mychannel/photo_1.jpg`. A link that starts with `https://` loads from the web; the sample pictures load from `https://cleanyourroku.com/media/` to keep the zip small. Replace them with your own.
 
 **If you make a typo** (a missing comma or quote is the usual one), My Channel still opens, and the About section tells you it couldn't read the file. `python3 -m json.tool mychannel.json` will point to the line.
 

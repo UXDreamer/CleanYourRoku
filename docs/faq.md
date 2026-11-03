@@ -36,20 +36,22 @@ If the *install page* (`http://<ROKU_IP>`) rejects you instead, that's usually a
 
 - **Shrink big images.** On a Mac:
   ```bash
-  sips -Z 1920 images/bg.jpg
+  sips -Z 1920 images/your-background.jpg
   ```
   Logos only need to be about 290×218. That's what the [logo puller](roku-setup.md#6-pull-your-app-logos) saves.
 - **Remove images you don't use.** Anything in `images/` goes into the zip, even if the code never references it.
-- **Use JPEG for photo-like backgrounds.** It's often far smaller than PNG. The launcher's background is already `bg.jpg`; if you add your own, keep the same name or update it in `HomeScene.xml`.
+- **Load big pictures from the web.** The launcher's background and the sample My Channel pictures load from `https://cleanyourroku.com/media/`, with tiny copies (`bg_tiny.jpg`, `app_family_tiny.jpg`) in the zip in case that fails. To use your own background, change the background `Poster` in `HomeScene.xml` to your own `https://` link, or to a JPEG in `images/`. JPEG is often far smaller than PNG for photos.
 - **Keep My Channel photos around 1280×720 JPEG.** See [my-channel.md](my-channel.md#keep-it-under-4-mb).
 
 ---
 
-## When I press Back in an app, I end up on Roku's home, not the launcher
+## Where does Back take me? And why does Home skip the launcher?
 
-**That's Roku, not a bug.** When you leave an app, the Roku system decides where you go, and it always goes to Roku's own home screen. A sideloaded app can't change that.
+**Back returns to the launcher.** When you open an app from CleanYourRoku and press Back inside it, you land on the launcher again.
 
-**Workarounds:**
+**Home always goes to Roku's home.** The Home button on your remote belongs to Roku, and a sideloaded app can't change where it goes.
+
+**Getting back to the launcher from Roku's home:**
 
 - Put CleanYourRoku first in your Roku's app list, so it's one click away.
 - Relaunch it from any computer on your Wi-Fi: `curl -d '' http://<ROKU_IP>:8060/launch/dev`

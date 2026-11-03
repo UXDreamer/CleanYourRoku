@@ -1,10 +1,10 @@
 {
   "name": "My Album",
   "tagline": "",
-  "tile_image": "pkg:/images/app_family_s.jpg",
+  "tile_image": "https://cleanyourroku.com/media/app_family_s.jpg",
   "about": {
     "name": "Damien Pressley",
-    "photo": "pkg:/images/mychannel/about.jpg",
+    "photo": "https://cleanyourroku.com/media/mychannel/about.jpg",
     "bio": "ASU Human Systems Engineering grad student. I built CleanYourRoku to help people take back control of their TV."
   },
   "photos": [
@@ -22,8 +22,8 @@
         "Isabella",
         "Angela"
       ],
-      "image": "pkg:/images/mychannel/still_1.jpg",
-      "thumb": "pkg:/images/mychannel/still_1.jpg",
+      "image": "https://cleanyourroku.com/media/mychannel/still_1.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/still_1.jpg",
       "caption": "Isabella Rides Solo"
     },
     {
@@ -39,8 +39,8 @@
         "Susan",
         "Linda"
       ],
-      "image": "pkg:/images/mychannel/still_2.jpg",
-      "thumb": "pkg:/images/mychannel/still_2.jpg",
+      "image": "https://cleanyourroku.com/media/mychannel/still_2.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/still_2.jpg",
       "caption": "Up on the Swings"
     },
     {
@@ -58,8 +58,8 @@
         "Angela",
         "Isabella"
       ],
-      "image": "pkg:/images/mychannel/still_3.jpg",
-      "thumb": "pkg:/images/mychannel/still_3.jpg",
+      "image": "https://cleanyourroku.com/media/mychannel/still_3.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/still_3.jpg",
       "caption": "Cable Cars in the Snow"
     },
     {
@@ -76,8 +76,8 @@
         "Mary",
         "Dana"
       ],
-      "image": "pkg:/images/mychannel/still_4.jpg",
-      "thumb": "pkg:/images/mychannel/still_4.jpg",
+      "image": "https://cleanyourroku.com/media/mychannel/still_4.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/still_4.jpg",
       "caption": "Duke and Peanut"
     },
     {
@@ -93,8 +93,8 @@
         "Tyler",
         "Denise"
       ],
-      "image": "pkg:/images/mychannel/still_5.jpg",
-      "thumb": "pkg:/images/mychannel/still_5.jpg",
+      "image": "https://cleanyourroku.com/media/mychannel/still_5.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/still_5.jpg",
       "caption": "Tyler on Stage"
     }
   ],
@@ -231,7 +231,7 @@
       "title": "Downtown",
       "url": "http://YOUR_JELLYFIN_IP:8096/Audio/d55e6576bcda921f43df3a50ec66d46d/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
       "artist": "Alex MakeMusic",
-      "record": "pkg:/images/mychannel/record_1.png",
+      "record": "https://cleanyourroku.com/media/mychannel/record_1.png",
       "length": "1:39",
       "color": "0x4DA3FFFF",
       "people": [
@@ -243,7 +243,7 @@
       "title": "Motivation",
       "url": "http://YOUR_JELLYFIN_IP:8096/Audio/c1f37c51e91ca95c4fc617a223292800/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
       "artist": "Atlas Audio",
-      "record": "pkg:/images/mychannel/record_2.png",
+      "record": "https://cleanyourroku.com/media/mychannel/record_2.png",
       "length": "1:26",
       "color": "0xE64848FF",
       "people": [
@@ -255,7 +255,7 @@
       "title": "Motivation II",
       "url": "http://YOUR_JELLYFIN_IP:8096/Audio/16f4ce3b20b4e403a08a6d99d4d976e1/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
       "artist": "Atlas Audio",
-      "record": "pkg:/images/mychannel/record_3.png",
+      "record": "https://cleanyourroku.com/media/mychannel/record_3.png",
       "length": "2:16",
       "color": "0xF0BE3CFF",
       "people": [
@@ -267,7 +267,7 @@
       "title": "Motivation",
       "url": "http://YOUR_JELLYFIN_IP:8096/Audio/28fa7d627498b27b69ab9e8981bf9d93/stream.mp3?AudioCodec=mp3&ApiKey=YOUR_JELLYFIN_API_KEY",
       "artist": "Paul Yudin",
-      "record": "pkg:/images/mychannel/record_4.png",
+      "record": "https://cleanyourroku.com/media/mychannel/record_4.png",
       "length": "1:15",
       "color": "0x50BE78FF",
       "people": [
@@ -288,7 +288,7 @@
       "source": "https://www.recipetineats.com/crepes/",
       "qr": "pkg:/images/mychannel/qr_recipe_2.png",
       "qrLabel": "Full recipe",
-      "thumb": "pkg:/images/mychannel/recipe_crepes.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/recipe_crepes.jpg",
       "video": "",
       "ingredients": [
         {
@@ -393,7 +393,7 @@
       "source": "",
       "qr": "",
       "qrLabel": "",
-      "thumb": "pkg:/images/mychannel/recipe_mac.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/recipe_mac.jpg",
       "video": "",
       "ingredients": [
         {
@@ -489,7 +489,7 @@
       "qr": "pkg:/images/mychannel/qr_recipe_3.png",
       "qrLabel": "Full recipe",
       "video": "",
-      "thumb": "pkg:/images/mychannel/recipe_noodles.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/recipe_noodles.jpg",
       "description": "A quick beef and rice noodle stir-fry in a savory, garlicky soy sauce. Tenderizing the beef first keeps it juicy.",
       "ingredients": [
         {
@@ -685,7 +685,7 @@
       "qr": "pkg:/images/mychannel/qr_recipe_4.png",
       "qrLabel": "Full recipe",
       "video": "",
-      "thumb": "pkg:/images/mychannel/recipe_gyros.jpg",
+      "thumb": "https://cleanyourroku.com/media/mychannel/recipe_gyros.jpg",
       "description": "Juicy marinated chicken wrapped in warm pita with a creamy sauce, salad and chips. The secret is a little curry powder in the marinade.",
       "ingredients": [
         {

@@ -2,11 +2,23 @@
 
 **Debloat your Roku TV over Wi-Fi and get an Apple TV-style home.**
 
+![The CleanYourRoku launcher v1.1: rounded app tiles over a movie theater background, a clock and date in the top right, and Music and Video buttons on the left](site/images/launcher-v1-1.jpg)
+
+*CleanYourRoku v1.1: your apps only, rounded tiles, a clock, and a Music button that plays from your own Jellyfin server.*
+
 Recommender systems decide a lot of what we watch. They pick the rows, the order, and the "next" thing before we've had a chance to choose. This project is about taking some of that control back.
 
 CleanYourRoku is a guide and toolkit for turning off the tracking your Roku ships with, then replacing the cluttered home screen with the **CleanYourRoku launcher**, a custom home screen that shows only your apps, in the order you pick.
 
 The launcher also has **My Channel**, a personal tile for your own family album. It holds a family tree, photos, videos, recipes, music and links, all from one settings file. Your videos and music can stream from your own [Jellyfin](docs/jellyfin.md) server. The album in this repo is filled with made-up sample family content for you to replace.
+
+**New in v1.1:**
+
+- **Clock and date** in the top right.
+- **Rounded app tiles** in a smaller, centered grid. The tile you're on grows slightly and gets a cherry-red glow, so it's easy to see from the couch.
+- **Music button** to the left of your apps. It opens a pop-up with Songs, Artists, Albums, Playlists and Recently Played from your own [Jellyfin](docs/jellyfin.md#4-the-music-button) server, a Now Playing line, and Play/Pause on your remote.
+- **Video button**, a placeholder for now. Video is coming in the next update.
+- **Smaller download.** The big pictures load from cleanyourroku.com, with tiny copies in the app in case the site can't be reached.
 
 It was built with AI as a partner, not a decision-maker. Claude helped write code and work through problems, but every choice about what goes on the screen was made by a person. That's the whole point. You'll see the same idea throughout: every section explains *why*, not just *how*, so you can decide for yourself what's worth changing.
 
@@ -125,6 +137,8 @@ python3 scripts/pull_logos.py --roku <ROKU_IP>
 
 Why pull them yourself: app logos are other companies' trademarks, so they aren't in this repo. `pull_logos.py` asks your own Roku for the icons of the apps you listed and saves them to `images/` on your computer. `.gitignore` keeps them out of Git. Until you run it, app tiles stay blank, and any listed app that isn't installed on your Roku gets skipped.
 
+For rounded corners that match the launcher's tiles, install Pillow first (`pip3 install pillow`). Without it, the logos still work but stay square.
+
 If you get a 403 error, see the [FAQ](docs/faq.md#i-get-a-403-error).
 
 ### Step 4: Zip
@@ -162,9 +176,10 @@ The short version:
 1. Install Jellyfin on a computer at home and add your videos and music.
 2. Create an API key in Jellyfin's admin dashboard.
 3. Add your items to `mychannel.json`, and leave `YOUR_JELLYFIN_IP` and `YOUR_JELLYFIN_API_KEY` exactly as they are.
-4. Put your real values in environment variables and build with the [Jellyfin build steps](docs/jellyfin.md#3-build-with-your-real-values).
+4. For the **Music button**, find your music library ID and user ID ([how](docs/jellyfin.md#4-the-music-button)). Leave the placeholders in `source/jellyfin.json` as they are.
+5. Put your real values in environment variables and build with the [Jellyfin build steps](docs/jellyfin.md#3-build-with-your-real-values).
 
-**Keep your API key out of Git.** Never type the real key or IP into `mychannel.json`, because that file is tracked. The build steps fill them into a copy in `build/`, which is git-ignored, so the real values only exist on your computer and your Roku. The finished zip holds your key, so don't share it.
+**Keep your API key out of Git.** Never type the real key, IP or IDs into `mychannel.json` or `source/jellyfin.json`, because both files are tracked. The build steps fill them into a copy in `build/`, which is git-ignored, so the real values only exist on your computer and your Roku. The finished zip holds your key, so don't share it.
 
 Full guide: [docs/jellyfin.md](docs/jellyfin.md)
 
@@ -176,7 +191,7 @@ Better to know these up front:
 
 - **Tested on two devices.** The Roku steps and the launcher have only been tested on Damien's own Roku streaming player (a box plugged into a TV). The Vizio guide was tested on his Vizio TV. Roku-built TVs and other Roku models may behave differently. If you try it on another device, please share how it went.
 - **One sideloaded app at a time.** Installing a new zip replaces the old one.
-- **Back goes to Roku's home.** When you press Back from inside an app, you land on Roku's home screen, not the launcher. Roku controls that behavior and a sideloaded channel can't override it.
+- **Home goes to Roku's home.** Back from an app you opened through the launcher brings you back to the launcher. The Home button on your remote always opens Roku's own home screen, and a sideloaded channel can't change that.
 - **It curates, it doesn't control.** The launcher changes what you *see*. It doesn't uninstall apps, block them, or lock anything down. It's not a parental control tool.
 - **Some sample QR codes need work from you.** Links QR codes stay blank until you run `make_qr.py`, and the Family profile QR codes aren't included. See [docs/my-channel.md](docs/my-channel.md#step-by-step).
 
@@ -200,7 +215,7 @@ Why list these: a tool about agency should be honest about what it can and can't
 
 [`scripts/rokuremote.py`](scripts/rokuremote.py) runs a small web page from your computer that you open on your phone. It's a remote with big buttons and a one-tap **CleanYourRoku** button at the top. (The screenshot shows the button's earlier label, Dreamer TV.)
 
-**Right now only the CleanYourRoku button works.** The other buttons are still being fixed. That one button is the useful part anyway: Roku sends you to its own home when you press Back from an app, and this gets you back to the launcher in one tap.
+**Right now only the CleanYourRoku button works.** The other buttons are still being fixed. That one button is the useful part anyway: it opens the launcher in one tap from anywhere, including Roku's own home screen after you've pressed Home.
 
 To try it, run `ROKU_IP=<ROKU_IP> python3 scripts/rokuremote.py` and open `http://<YOUR_COMPUTER_IP>:8001` on your phone.
 

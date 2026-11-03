@@ -1,28 +1,56 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="AppTile" extends="Group">
-<interface><field id="itemContent" type="node" onChange="showContent" /></interface>
+<interface>
+    <field id="itemContent" type="node" onChange="showContent" />
+    <field id="focusPercent" type="float" onChange="showFocus" />
+    <field id="gridHasFocus" type="bool" onChange="showFocus" />
+</interface>
 <script type="text/brightscript"><![CDATA[
 ' Tiles get reused as the grid scrolls, so every tile resets the name bar.
 ' Only the My Channel tile sets shortDescriptionLine1, which shows the owner's name under its image.
+sub init()
+    m.top.scaleRotateCenter = [160, 120]
+    m.glow = m.top.findNode("glow")
+    showFocus()
+end sub
+
 sub showContent()
     item = m.top.itemContent
     logo = m.top.findNode("logo")
+    if Left(item.HDPosterUrl, 8) = "https://" then
+        logo.loadingBitmapUri = "pkg:/images/app_family_tiny.jpg"
+        logo.failedBitmapUri = "pkg:/images/app_family_tiny.jpg"
+    else
+        logo.loadingBitmapUri = ""
+        logo.failedBitmapUri = ""
+    end if
     logo.uri = item.HDPosterUrl
     name = item.shortDescriptionLine1
     hasName = (name <> invalid and name <> "")
     m.top.findNode("bar").visible = hasName
     m.top.findNode("name").visible = hasName
     if hasName then
-        logo.height = 236
+        logo.height = 170
         m.top.findNode("name").text = name
     else
-        logo.height = 300
+        logo.height = 216
     end if
+end sub
+
+' Focused tile grows a little, gets a cherry-red glow, and the rest dim slightly.
+sub showFocus()
+    fp = m.top.focusPercent
+    if not m.top.gridHasFocus then fp = 0
+    s = 1.0 + 0.06 * fp
+    m.top.scale = [s, s]
+    m.glow.opacity = fp
+    m.top.opacity = 0.8 + 0.2 * fp
 end sub
 ]]></script>
 <children>
-    <Poster id="logo" width="400" height="300" loadDisplayMode="scaleToFit" />
-    <Rectangle id="bar" visible="false" translation="[0,244]" width="400" height="56" color="0x13294BFF" />
-    <Label id="name" visible="false" translation="[0,244]" width="400" height="56" horizAlign="center" vertAlign="center" font="font:MediumBoldSystemFont" color="0xFFFFFFFF" />
+    <Poster id="glow" translation="[11,7]" width="298" height="226" uri="pkg:/images/tile_glow.png" blendColor="0xD2042DFF" opacity="0" />
+    <Poster id="logo" translation="[16,12]" width="288" height="216" loadDisplayMode="scaleToFit" />
+    <Rectangle id="bar" visible="false" translation="[16,182]" width="288" height="46" color="0x13294BFF" />
+    <Label id="name" visible="false" translation="[16,182]" width="288" height="46" horizAlign="center" vertAlign="center" font="font:SmallBoldSystemFont" color="0xFFFFFFFF" />
 </children>
 </component>

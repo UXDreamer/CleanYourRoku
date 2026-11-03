@@ -162,7 +162,7 @@ Type `genkey` and press Enter. It prints a **password** and a **DevID**. Save bo
 
 Be clear-eyed about the limits, so the decision to use it is an informed one:
 
-- **Back goes to Roku's home.** Pressing Back inside Netflix or another app returns you to Roku's home screen, not the launcher. Roku controls this, and an app can't override it. Tip: you can jump straight back from any computer on your Wi-Fi with `curl -d '' http://<ROKU_IP>:8060/launch/dev`. That's the same command behind the one-tap "CleanYourRoku" button on the [phone remote](../scripts/rokuremote.py) (work in progress: only that button works so far).
+- **Home goes to Roku's home.** Pressing Back inside Netflix or another app you opened from the launcher brings you back to the launcher. The Home button on your remote always opens Roku's own home screen; Roku controls that, and an app can't override it. Tip: you can jump back to the launcher from any computer on your Wi-Fi with `curl -d '' http://<ROKU_IP>:8060/launch/dev`. That's the same command behind the one-tap "CleanYourRoku" button on the [phone remote](../scripts/rokuremote.py) (work in progress: only that button works so far).
 - **It curates; it doesn't control.** The launcher changes what you *see*. It doesn't uninstall, block or lock any apps.
 - **Roku's home is still there.** The launcher is an alternative home, not a replacement for Roku's.
 
